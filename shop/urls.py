@@ -54,7 +54,6 @@ urlpatterns = [
     path('zenova.com/wishlist/remove/<int:product_id>/', views.WishlistRemoveView.as_view(), name='wishlist_remove'),
     path('zenova.com/wishlist/to/cart/<int:product_id>/', views.WishToCartView.as_view(), name='wishlist_cart'),
 
-
     # Product Coupon Routes
     path('zenova.com/coupons/', views.CouponListView.as_view(), name='coupon_list'),
     path('zenova.com/coupons/create/', views.CouponCreateView.as_view(), name='coupon_create'),
@@ -63,6 +62,7 @@ urlpatterns = [
     path('zenova.com/coupons/<int:coupon_id>/apply/', views.CouponApplyView.as_view(), name='coupon_apply'),
 
     # Product Shipment Routes
+    path('zenova.com/shipments/',views.ShipmentListView.as_view(),name='shipment_list'),
     path('zenova.com/shipments/<int:order_id>/', views.ShipmentDetailView.as_view(), name='shipment_detail'),
     path('zenova.com/shipments/<int:order_id>/create/', views.ShipmentCreateView.as_view(), name='shipment_create'),
     path('zenova.com/shipments/<int:order_id>/update-tracking/', views.ShipmentUpdateTrackingView.as_view(),  name='shipment_update_tracking'),
@@ -78,11 +78,16 @@ urlpatterns = [
     # Customer Routes for Coupon Management
     path('zenova.com/my-coupons/', views.CustomerCouponListView.as_view(), name='customer_coupon_list'),
 
+    # Proceed to Payment
+    path("order/create/from-cart/", views.OrderCreateFromCartView.as_view(), name="order_create_from_cart"),
+
+
     # Policy Terms
     path('terms-of-use/', TemplateView.as_view(template_name="policies/terms_of_use.html"), name="terms_of_use"),
     path('privacy-policy/', TemplateView.as_view(template_name="policies/privacy_policy.html"), name="privacy_policy"),
     path('payment-policy/', TemplateView.as_view(template_name="policies/payment_policy.html"), name="payment_policy"),
     path('warranty-service/', TemplateView.as_view(template_name="policies/warranty_service.html"), name="warranty_service"),
+
 
 
 ]
