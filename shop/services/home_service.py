@@ -1,5 +1,3 @@
-# shop/services/home_service.py
-
 from shop.models.product_model import Product
 from shop.models.category_model import Category
 
