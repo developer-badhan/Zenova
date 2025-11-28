@@ -4,6 +4,7 @@ from django.conf.urls.static import static
 
 urlpatterns = [
     path('zenova.com/', include('user.urls')),
+    path('payment/', include('payment.urls')),
     path('',include('shop.urls')),
 ]
 
