@@ -6,5 +6,5 @@ from .cart_model import Cart
 from .cart_item_model import CartItem
 from .review_model import Review
 from .wishlist_model import Wishlist
-from .coupon_model import Coupon
+from .coupon_model import Coupon,CouponAssignment,CouponUsage
 from .shipment_model import Shipment

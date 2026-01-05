@@ -1,0 +1,19 @@
+/* Additional Css */
+.coupon-card {
+    border: none;
+    border-radius: 14px;
+    overflow: hidden;
+    background: linear-gradient(135deg, #f8f9fa, #ffffff);
+    box-shadow: 0 6px 14px rgba(0,0,0,0.08);
+    transition: transform 0.25s ease, box-shadow 0.25s ease;
+  }
+
+  .coupon-card:hover {
+    transform: translateY(-6px);
+    box-shadow: 0 10px 22px rgba(0,0,0,0.15);
+  }
+
+  .card-footer {
+    background-color: #f8f9fa;
+    font-size: 0.9rem;
+  }

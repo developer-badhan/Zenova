@@ -6,13 +6,14 @@ from constants.enums import Role
 from shop.models import Coupon
 from shop.services import coupon_service
 from user.services import enduser_service
-from decorators import login_admin_required,customer_required,login_admin_required_with_user,inject_authenticated_user
+from decorators import customer_required,login_admin_required_with_user,inject_authenticated_user
 from django.contrib.auth import get_user_model
 
 
 
 # Coupon list view
 class CouponListView(View):
+    @login_admin_required_with_user
     def get(self, request):
         coupons = coupon_service.get_all_coupons()
         customers = enduser_service.get_all_customers()
@@ -71,6 +72,8 @@ class CouponUpdateView(View):
             messages.error(request, f"Failed to update coupon: {e}")
             return redirect('coupon_update', coupon_id=coupon_id)
 
+
+# Coupon Delete View
 class CouponDeleteView(View):
     @login_admin_required_with_user
     def get(self, request, coupon_id):
@@ -92,18 +95,38 @@ class CouponDeleteView(View):
             return redirect('coupon_list')
 
 
-# Coupon application view
+# Coupon Apply View
 class CouponApplyView(View):
+    @inject_authenticated_user
     @customer_required
-    def post(self, request):
-        coupon_code = request.POST.get('coupon_code')
+    def post(self, request, coupon_id):
         try:
-            discount = coupon_service.apply_coupon(request.user, coupon_code)
-            messages.success(request, f"Coupon applied! You saved {discount}% off.")
-            return redirect('order_create')  
-        except Exception as e:
-            messages.error(request, f"Failed to apply coupon: {e}")
-            return redirect('order_create')
+            coupon_service.apply_coupon_by_id(user=request.user,coupon_id=coupon_id)
+            coupon = Coupon.objects.get(id=coupon_id)
+            return render(request, "partials/coupon_message.html", {
+                "type": "success",
+                "message": "🎉 Coupon applied successfully!",
+                "coupon": coupon,
+            })
+        except ValueError as e:
+            msg = str(e).lower()
+            if "expired" in msg:
+                alert_type = "danger"
+                message = "⏰ This coupon has expired."
+            elif "already used" in msg:
+                alert_type = "warning"
+                message = "ℹ️ You already used this coupon."
+            elif "usage limit" in msg:
+                alert_type = "warning"
+                message = "❌ Coupon usage limit reached."
+            else:
+                alert_type = "danger"
+                message = str(e)
+            return render(request, "partials/coupon_message.html", {
+                "type": alert_type,
+                "message": message,
+                "coupon_id": coupon_id
+            }, status=400)
 
 
 # Assign coupon to user view
@@ -118,9 +141,8 @@ class AssignCouponToUserView(View):
             if user.role != Role.ENDUSER_CUSTOMER:
                 messages.error(request, "Only customers can be assigned coupons.")
                 return redirect('coupon_list')
-            coupon.used_by.add(user)
-            coupon.save()
-            messages.success(request, f"Coupon assigned to {user.email}.")
+            coupon_service.assign_coupon_to_user(coupon=coupon,user=user)
+            messages.success(request,f"Coupon assigned to {user.email}.")
         except Exception as e:
             messages.error(request, f"Error assigning coupon: {e}")
         return redirect('coupon_list')

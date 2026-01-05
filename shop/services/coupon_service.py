@@ -1,45 +1,27 @@
 import re
 from datetime import datetime
 from django.utils import timezone
-from shop.models import Coupon
+from django.db import transaction
+from shop.models import Coupon,CouponUsage,CouponAssignment
 
 
+
+# Coupone Sanitization Input
 def _normalize_date_str(s: str) -> str:
-    """
-    Normalize common user inputs:
-    - Trim, collapse multiple spaces
-    - Uppercase AM/PM
-    - Ensure there is a space before AM/PM if the user typed '5:00PM' or '5PM'
-    - Remove stray periods (e.g. 'a.m.' -> 'AM')
-    """
     if s is None:
         raise ValueError("Date string is required.")
     s = s.strip()
-    # collapse multiple spaces
     s = re.sub(r'\s+', ' ', s)
-    # remove dots in am/pm (a.m. -> am)
     s = re.sub(r'\bA\.?M\.?\b', 'AM', s, flags=re.IGNORECASE)
     s = re.sub(r'\bP\.?M\.?\b', 'PM', s, flags=re.IGNORECASE)
     s = s.upper()
-    # ensure space before AM/PM if missing, e.g. '5:00PM' -> '5:00 PM'
     s = re.sub(r'(?<!\s)(AM|PM)\b', r' \1', s)
     return s
 
 
+# Coupon Time Checkup
 def parse_datetime_with_fallback(date_str):
-    """
-    Try multiple formats for flexibility:
-      - '2025-10-22 14:30'         (24-hour)
-      - '2025-10-22 02:30 PM'      (12-hour with space)
-      - '2025-10-22 02:30PM'       (12-hour without space)
-      - '2025-10-22 2 PM'          (12-hour without minutes)
-      - '2025-10-22 02:30:15 PM'   (with seconds)
-    Raises ValueError if none match.
-    Returns timezone-aware datetime.
-    """
     s = _normalize_date_str(date_str)
-
-    # candidate formats (ordered: most common -> fallback)
     formats = [
         "%Y-%m-%d %H:%M:%S",
         "%Y-%m-%d %H:%M",
@@ -48,75 +30,50 @@ def parse_datetime_with_fallback(date_str):
         "%Y-%m-%d %I%p",
         "%Y-%m-%d %I %p",
     ]
-
-    last_err = None
     for fmt in formats:
         try:
             dt = datetime.strptime(s, fmt)
-            # make timezone-aware using Django utilities
             return timezone.make_aware(dt)
-        except ValueError as e:
-            last_err = e
+        except ValueError:
             continue
-
-    # none matched
     raise ValueError(
-        "Invalid date/time format. Accepted examples: "
-        "'YYYY-MM-DD HH:MM' (24-hour) or 'YYYY-MM-DD h:MM AM/PM' (12-hour)."
+        "Invalid date/time format. Use "
+        "'YYYY-MM-DD HH:MM' or 'YYYY-MM-DD h:MM AM/PM'."
     )
 
 
-# Get all coupons
+# Coupon List
 def get_all_coupons():
     return Coupon.objects.all()
 
 
-# Create coupon
+# Coupon Creation
 def create_coupon(code, discount_percent, valid_from, valid_to, usage_limit, created_by):
-    # Basic validation: ensure fields are present
     if not code:
         raise ValueError("Coupon code is required.")
-    if discount_percent is None or discount_percent == '':
+    if discount_percent in (None, ''):
         raise ValueError("Discount percent is required.")
-    if not valid_from:
-        raise ValueError("Valid from datetime is required.")
-    if not valid_to:
-        raise ValueError("Valid to datetime is required.")
-
-    valid_from_dt = parse_datetime_with_fallback(valid_from)
-    valid_to_dt = parse_datetime_with_fallback(valid_to)
-    discount_percent = float(discount_percent)
-
-    if Coupon.objects.filter(code=code).exists():
+    if not valid_from or not valid_to:
+        raise ValueError("Validity dates are required.")
+    if Coupon.objects.filter(code__iexact=code).exists():
         raise ValueError("Coupon code already exists.")
-
     coupon = Coupon.objects.create(
         code=code,
-        discount_percent=discount_percent,
-        valid_from=valid_from_dt,
-        valid_to=valid_to_dt,
+        discount_percent=float(discount_percent),
+        valid_from=parse_datetime_with_fallback(valid_from),
+        valid_to=parse_datetime_with_fallback(valid_to),
         usage_limit=usage_limit,
-        created_by=created_by
+        created_by=created_by,
     )
     return coupon
 
 
-# Update coupon
+# Coupon Update
 def update_coupon(coupon_id, code, discount_percent, valid_from, valid_to, usage_limit):
     try:
         coupon = Coupon.objects.get(id=coupon_id)
     except Coupon.DoesNotExist:
         raise ValueError("Coupon not found.")
-
-    if not code:
-        raise ValueError("Coupon code is required.")
-    if discount_percent is None or discount_percent == '':
-        raise ValueError("Discount percent is required.")
-    if not valid_from:
-        raise ValueError("Valid from datetime is required.")
-    if not valid_to:
-        raise ValueError("Valid to datetime is required.")
-
     coupon.code = code
     coupon.discount_percent = float(discount_percent)
     coupon.valid_from = parse_datetime_with_fallback(valid_from)
@@ -126,34 +83,70 @@ def update_coupon(coupon_id, code, discount_percent, valid_from, valid_to, usage
     return coupon
 
 
-# Delete coupon
+# Coupon Deletion
 def delete_coupon(coupon_id):
-    try:
-        coupon = Coupon.objects.get(id=coupon_id)
-        coupon.delete()
-    except Coupon.DoesNotExist:
+    deleted, _ = Coupon.objects.filter(id=coupon_id).delete()
+    if not deleted:
         raise ValueError("Coupon not found.")
 
 
-# Apply a coupon to a user's order
-def apply_coupon(user, coupon_code):
+# Assign Coupon to User
+def assign_coupon_to_user(coupon, user):
+    assignment, created = CouponAssignment.objects.get_or_create(
+        coupon=coupon,
+        user=user
+    )
+    return assignment
+
+
+# Validate Coupon for User
+def validate_coupon_for_user(user, coupon_code):
     try:
-        coupon = Coupon.objects.get(code=coupon_code, active=True)
+        coupon = Coupon.objects.get(code__iexact=coupon_code, active=True)
     except Coupon.DoesNotExist:
         raise ValueError("Invalid coupon code.")
     now = timezone.now()
     if not (coupon.valid_from <= now <= coupon.valid_to):
-        raise ValueError("Coupon is not valid.")
+        raise ValueError("Coupon expired.")
     if coupon.used_count >= coupon.usage_limit:
         raise ValueError("Coupon usage limit reached.")
-    if user in coupon.used_by.all():
-        raise ValueError("You have already used this coupon.")
-    coupon.used_count += 1
-    coupon.used_by.add(user)
-    coupon.save()
+    if not CouponAssignment.objects.filter(coupon=coupon, user=user).exists():
+        raise ValueError("Coupon not assigned to you.")
+    if CouponUsage.objects.filter(coupon=coupon, user=user).exists():
+        raise ValueError("You already used this coupon.")
+    return coupon
+
+
+# Apply Coupon by ID
+def apply_coupon_by_id(user, coupon_id):
+    with transaction.atomic():
+        try:
+            coupon = Coupon.objects.select_for_update().get(
+                id=coupon_id,
+                active=True
+            )
+        except Coupon.DoesNotExist:
+            raise ValueError("Invalid coupon.")
+        now = timezone.now()
+        if not (coupon.valid_from <= now <= coupon.valid_to):
+            raise ValueError("Coupon expired.")
+        if coupon.used_count >= coupon.usage_limit:
+            raise ValueError("Coupon usage limit reached.")
+        if not CouponAssignment.objects.filter(coupon=coupon, user=user).exists():
+            raise ValueError("Coupon not assigned to you.")
+        if CouponUsage.objects.filter(coupon=coupon, user=user).exists():
+            raise ValueError("Coupon already used.")
+        CouponUsage.objects.create(coupon=coupon, user=user)
+        coupon.used_count = CouponUsage.objects.filter(coupon=coupon).count()
+        coupon.save(update_fields=["used_count"])
     return coupon.discount_percent
 
 
-# Get all coupons assigned to a user
+# Get Coupons Assigned to User
 def get_coupons_assigned_to_user(user):
-    return Coupon.objects.filter(used_by=user)
+    return Coupon.objects.filter(
+        couponassignment__user=user,
+        active=True
+    ).distinct()
+
+

@@ -144,9 +144,15 @@
             </a>
             <!-- Right side buttons -->
             <div class="d-flex gap-3">
-                <a href="#" class="btn btn-success px-4 py-2">
-                    <i class="fa fa-tag me-2"></i> Apply Coupon
-                </a>
+              {% if not coupon %}
+                  <a href="{% url 'customer_coupon_list' %}" class="btn btn-success px-4 py-2">
+                      <i class="fa fa-tag me-2"></i> Apply Coupon
+                  </a>
+              {% else %}
+                  <span class="badge bg-success px-3 py-2">
+                      Coupon "{{ coupon.code }}" Applied
+                  </span>
+              {% endif %}
                 <a href="{% url 'order_create_from_cart' %}" class="btn btn-primary btn-lg px-5 py-2 shadow">
                     <i class="fa fa-credit-card me-2"></i> Proceed to Checkout
                 </a>
