@@ -14,17 +14,15 @@ class CartDetailView(View):
     @customer_required
     @inject_authenticated_user
     def get(self, request):
-        try:
-            items = cart_service.get_cart_items(request.user)
-            cart = cart_service.get_cart(request.user)
-            total_price, _ = cart_service.calculate_cart_total(cart)
-            return render(request, 'cart/cart_detail.html', {
-                'items': items,
-                'total_price': total_price
-            })
-        except Exception as e:
-            print(f"Error displaying cart: {e}")
-            return HttpResponseServerError("Something went wrong.")
+        cart = cart_service.get_cart(request.user)
+        items = cart_service.get_cart_items(request.user)
+
+        totals = cart_service.calculate_cart_total(cart, request)
+
+        return render(request, "cart/cart_detail.html", {
+            "items": items,
+            **totals
+        })
 
 
 # Add Item to Cart

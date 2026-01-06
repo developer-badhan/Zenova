@@ -2,6 +2,7 @@ import re
 from datetime import datetime
 from django.utils import timezone
 from django.db import transaction
+from decimal import Decimal
 from shop.models import Coupon,CouponUsage,CouponAssignment
 
 
@@ -59,7 +60,8 @@ def create_coupon(code, discount_percent, valid_from, valid_to, usage_limit, cre
         raise ValueError("Coupon code already exists.")
     coupon = Coupon.objects.create(
         code=code,
-        discount_percent=float(discount_percent),
+        # discount_percent=float(discount_percent),
+        discount_percent=Decimal(discount_percent),
         valid_from=parse_datetime_with_fallback(valid_from),
         valid_to=parse_datetime_with_fallback(valid_to),
         usage_limit=usage_limit,
@@ -75,7 +77,7 @@ def update_coupon(coupon_id, code, discount_percent, valid_from, valid_to, usage
     except Coupon.DoesNotExist:
         raise ValueError("Coupon not found.")
     coupon.code = code
-    coupon.discount_percent = float(discount_percent)
+    coupon.discount_percent = Decimal(discount_percent)
     coupon.valid_from = parse_datetime_with_fallback(valid_from)
     coupon.valid_to = parse_datetime_with_fallback(valid_to)
     coupon.usage_limit = usage_limit
@@ -119,27 +121,29 @@ def validate_coupon_for_user(user, coupon_code):
 
 # Apply Coupon by ID
 def apply_coupon_by_id(user, coupon_id):
+    try:
+        coupon = Coupon.objects.get(id=coupon_id, active=True)
+    except Coupon.DoesNotExist:
+        raise ValueError("Invalid coupon.")
+    now = timezone.now()
+    if not (coupon.valid_from <= now <= coupon.valid_to):
+        raise ValueError("Coupon expired.")
+    if coupon.used_count >= coupon.usage_limit:
+        raise ValueError("Coupon usage limit reached.")
+    if not CouponAssignment.objects.filter(coupon=coupon, user=user).exists():
+        raise ValueError("Coupon not assigned to you.")
+    if CouponUsage.objects.filter(coupon=coupon, user=user).exists():
+        raise ValueError("Coupon already used.")
+    return coupon  
+
+
+
+# Mark as Used or Not
+def mark_coupon_used(user, coupon):
     with transaction.atomic():
-        try:
-            coupon = Coupon.objects.select_for_update().get(
-                id=coupon_id,
-                active=True
-            )
-        except Coupon.DoesNotExist:
-            raise ValueError("Invalid coupon.")
-        now = timezone.now()
-        if not (coupon.valid_from <= now <= coupon.valid_to):
-            raise ValueError("Coupon expired.")
-        if coupon.used_count >= coupon.usage_limit:
-            raise ValueError("Coupon usage limit reached.")
-        if not CouponAssignment.objects.filter(coupon=coupon, user=user).exists():
-            raise ValueError("Coupon not assigned to you.")
-        if CouponUsage.objects.filter(coupon=coupon, user=user).exists():
-            raise ValueError("Coupon already used.")
         CouponUsage.objects.create(coupon=coupon, user=user)
         coupon.used_count = CouponUsage.objects.filter(coupon=coupon).count()
         coupon.save(update_fields=["used_count"])
-    return coupon.discount_percent
 
 
 # Get Coupons Assigned to User

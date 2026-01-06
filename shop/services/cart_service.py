@@ -215,14 +215,24 @@ def clear_cart(user):
 
 
 # Calculate the total price in Grand Cart
-def calculate_cart_total(cart, coupon=None):
-    total = Decimal("0.00")
-    for item in cart.items.select_related('product'):
-        total += Decimal(str(item.product.price)) * item.quantity
+def calculate_cart_total(cart, request=None):
+    items = cart.items.select_related("product")
+    subtotal = sum(
+        item.product.price * item.quantity
+        for item in items
+    )
     discount_amount = Decimal("0.00")
-    if coupon:
-        discount_amount = total * (coupon.discount_percent / Decimal("100"))
-        total -= discount_amount
-    return total.quantize(Decimal("0.01")), discount_amount.quantize(Decimal("0.01"))
-
-
+    coupon = None
+    if request:
+        coupon_data = request.session.get("applied_coupon")
+        if coupon_data:
+            coupon = coupon_data
+            discount_percent = Decimal(coupon_data["discount_percent"])
+            discount_amount = (subtotal * discount_percent) / Decimal("100")
+    grand_total = subtotal - discount_amount
+    return {
+        "subtotal": subtotal,
+        "discount": discount_amount,
+        "grand_total": grand_total,
+        "coupon": coupon,
+    }
