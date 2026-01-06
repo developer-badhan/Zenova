@@ -125,13 +125,26 @@
                 </tr>
                 {% endfor %}
             </tbody>
-            <tfoot class="table-light">
+                <tfoot class="table-light">
                 <tr>
-                    <td colspan="5" class="text-end fw-bold fs-5">Grand Total:</td>
-                    <td class="text-center fw-bold fs-5 text-success">₹{{ total_price|floatformat:2 }}</td>
-                    <td></td>
+                  <td colspan="5" class="text-end fw-bold fs-5">Grand Total:</td>
+                    <td class="text-center fw-bold fs-5">
+                      {% if coupon %}
+                        <div class="text-danger text-decoration-line-through small">
+                          ₹{{ subtotal|floatformat:2 }}
+                        </div>
+                        <div class="text-success fw-bold">
+                          ₹{{ grand_total|floatformat:2 }}
+                        </div>
+                      {% else %}
+                        <span class="text-success">
+                          ₹{{ subtotal|floatformat:2 }}
+                        </span>
+                      {% endif %}
+                    </td>
                 </tr>
             </tfoot>
+
         </table>
     </div>
 
@@ -144,15 +157,9 @@
             </a>
             <!-- Right side buttons -->
             <div class="d-flex gap-3">
-              {% if not coupon %}
                   <a href="{% url 'customer_coupon_list' %}" class="btn btn-success px-4 py-2">
                       <i class="fa fa-tag me-2"></i> Apply Coupon
                   </a>
-              {% else %}
-                  <span class="badge bg-success px-3 py-2">
-                      Coupon "{{ coupon.code }}" Applied
-                  </span>
-              {% endif %}
                 <a href="{% url 'order_create_from_cart' %}" class="btn btn-primary btn-lg px-5 py-2 shadow">
                     <i class="fa fa-credit-card me-2"></i> Proceed to Checkout
                 </a>
@@ -298,6 +305,22 @@
 
 <script src="{% static 'js/cart.js' %}"></script>
 
+
+<style>
+.price-transition {
+  transition: all 0.4s ease-in-out;
+}
+</style>
+
+
+<script>
+  document.addEventListener("DOMContentLoaded", () => {
+  const priceBox = document.querySelector(".price-transition");
+  if (priceBox) {
+    priceBox.classList.add("animate__pulse");
+  }
+});
+</script>
 
 {% endblock %}
 
