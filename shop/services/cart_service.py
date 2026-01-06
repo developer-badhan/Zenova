@@ -1,5 +1,6 @@
 from shop.models import Cart, CartItem, Product
 from django.core.exceptions import ObjectDoesNotExist
+from decimal import Decimal
 
 
 # User Validation
@@ -159,7 +160,6 @@ def update_item(user, product_sku, quantity, expected_sku=None):
         item.save()
         print(f"update_item: Updated SKU {sku} to quantity {qty_int} for user_id={user.id}")
         return item
-
     except Exception as e:
         print(f"update_item: Unexpected error updating cart item: {e}")
         return None
@@ -214,5 +214,15 @@ def clear_cart(user):
         return False
 
 
+# Calculate the total price in Grand Cart
+def calculate_cart_total(cart, coupon=None):
+    total = Decimal("0.00")
+    for item in cart.items.select_related('product'):
+        total += Decimal(str(item.product.price)) * item.quantity
+    discount_amount = Decimal("0.00")
+    if coupon:
+        discount_amount = total * (coupon.discount_percent / Decimal("100"))
+        total -= discount_amount
+    return total.quantize(Decimal("0.01")), discount_amount.quantize(Decimal("0.01"))
 
 
