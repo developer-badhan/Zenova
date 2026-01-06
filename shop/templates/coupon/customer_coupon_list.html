@@ -1,62 +1,110 @@
 {% extends 'base.html' %}
+{% load static %}
 {% block title %}My Coupons{% endblock %}
 
 {% block content %}
-<div class="container mt-5">
-  <h3 class="mb-4 text-center" style="font-weight: 600;">🎟️ My Coupons</h3>
-  {% if coupons %}
-    <div class="row">
-      {% for coupon in coupons %}
-      <div class="col-md-4 col-sm-6 mb-4">
-        <div class="card h-100" 
-             style="border: none; border-radius: 10px; overflow: hidden; box-shadow: 0 4px 10px rgba(0,0,0,0.1); transition: transform 0.2s ease, box-shadow 0.2s ease;">
-          <div class="card-body" 
-               style="padding: 1.5rem; background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%); border-left: 6px solid #007bff;">
-            <h5 class="card-title text-primary" style="font-weight: 700; font-size: 1.25rem; margin-bottom: 0.75rem;">
-              <i class="bi bi-ticket-perforated"></i> Code: {{ coupon.code }}
-            </h5>
+<link rel="stylesheet" href="{% static 'css/coupon.css' %}">
+<script src="{% static 'js/coupon.js' %}" defer></script>
 
-            <div style="margin-bottom: 0.75rem;">
-              <span class="badge bg-success" style="font-size: 0.9rem; padding: 0.5em 0.75em;">
+<div class="container mt-5">
+  <h3 class="mb-4 text-center fw-bold">🎟️ My Coupons</h3>
+
+  <!-- 🔔 Colorful Message Area -->
+  <div id="coupon-message" class="mb-4"></div>
+
+  {% if coupons %}
+    <div class="row g-4">
+      {% for coupon in coupons %}
+      <div class="col-md-4 col-sm-6">
+        <div class="card coupon-card h-100 shadow-sm">
+          <div class="card-body">
+
+            <div class="d-flex justify-content-between align-items-center mb-3">
+              <h5 class="text-primary fw-bold mb-0">
+                <i class="bi bi-ticket-perforated"></i> {{ coupon.code }}
+              </h5>
+              <span class="badge bg-success fs-6">
                 {{ coupon.discount_percent }}% OFF
               </span>
             </div>
 
-            <p class="card-text mb-2"><strong>Valid From:</strong> 
-              <span style="color: #555;">{{ coupon.valid_from|date:"Y-m-d H:i" }}</span>
+            <p class="mb-2 text-muted">
+              <strong>Valid From:</strong><br>
+              {{ coupon.valid_from|date:"Y-m-d H:i" }}
             </p>
 
-            <p class="card-text mb-2"><strong>Valid To:</strong> 
-              <span style="color: #555;">{{ coupon.valid_to|date:"Y-m-d H:i" }}</span>
+            <p class="mb-2 text-muted">
+              <strong>Valid To:</strong><br>
+              {{ coupon.valid_to|date:"Y-m-d H:i" }}
             </p>
 
-            <p class="card-text mb-0"><strong>Usage:</strong> 
-              <span style="color: #007bff;">{{ coupon.used_count }}</span> / {{ coupon.usage_limit }}
+            <p class="mb-3">
+              <strong>Usage:</strong>
+              <span class="text-primary fw-semibold used-count"
+                    data-coupon-id="{{ coupon.id }}">
+                {{ coupon.used_count }}
+              </span>
+              / {{ coupon.usage_limit }}
             </p>
+
+            <div class="d-flex gap-2">
+
+              <!-- 🟢 Apply Coupon (AJAX Enabled) -->
+              <form method="post"
+                    action="{% url 'coupon_apply' coupon.id %}"
+                    class="coupon-form w-100"
+                    data-coupon-id="{{ coupon.id }}">
+                {% csrf_token %}
+                <button type="submit"
+                        class="btn btn-primary btn-sm w-100 apply-btn"
+                        {% if coupon.used_count >= coupon.usage_limit %}
+                          disabled
+                        {% endif %}>
+                  {% if coupon.used_count >= coupon.usage_limit %}
+                    Used / Expired
+                  {% else %}
+                    Apply Coupon
+                  {% endif %}
+                </button>
+              </form>
+
+              <a href="{% url 'cart_detail' %}"
+                 class="btn btn-outline-secondary btn-sm w-100">
+                Return
+              </a>
+
+            </div>
           </div>
-          <div class="card-footer text-center bg-light" style="font-size: 0.9rem; font-weight: 500;">
+
+          <div class="card-footer text-center">
             {% if coupon.used_count >= coupon.usage_limit %}
-              <span class="text-danger">Expired or Fully Used</span>
+              <span class="text-danger fw-semibold">
+                <i class="fa fa-times-circle me-1"></i>
+                Expired or Fully Used
+              </span>
             {% else %}
-              <span class="text-success">Available</span>
+              <span class="text-success fw-semibold">
+                <i class="fa fa-check-circle me-1"></i>
+                Available
+              </span>
             {% endif %}
           </div>
+
         </div>
       </div>
       {% endfor %}
     </div>
   {% else %}
-    <div class="text-center" style="padding: 40px 0;">
-      <img src="https://cdn-icons-png.flaticon.com/512/4076/4076549.png" alt="No Coupons" width="100" class="mb-3">
-      <p style="font-size: 1.1rem; color: #666;">You don’t have any coupons assigned yet.</p>
+    <div class="text-center py-5">
+      <img src="https://cdn-icons-png.flaticon.com/512/4076/4076549.png"
+           alt="No Coupons"
+           width="110"
+           class="mb-3">
+      <p class="fs-5 text-muted">
+        You don’t have any coupons assigned yet.
+      </p>
     </div>
   {% endif %}
 </div>
 
-<style>
-  .card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 6px 16px rgba(0,0,0,0.15);
-  }
-</style>
 {% endblock %}

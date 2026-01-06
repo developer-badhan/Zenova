@@ -1,27 +1,87 @@
 {% extends 'home.html' %}
+{% load static %}
+{% block title %}Order #{{ order.id }}{% endblock %}
 
 {% block content %}
-  <h1>Order Details for Order #{{ order.id }}</h1>
+<div class="container my-5">
 
-  <p>Status: {% if order.is_paid %} Paid {% else %} Unpaid {% endif %}</p>
-  <p>Created At: {{ order.created_at }}</p>
-  <p>Total Amount: ${{ order.total_amount }}</p>
+  <div class="card shadow-sm border-0">
+    <div class="card-body p-4">
 
-  {% if order.coupon %}
-    <p>Applied Coupon: {{ order.coupon.code }}</p>
-  {% endif %}
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <h3 class="mb-0">🧾 Order No.{{ order.id }}</h3>
+        <span class="badge {% if order.is_paid %}bg-success{% else %}bg-warning text-dark{% endif %} px-3 py-2">
+          {{ order.payment_status }}
+        </span>
+      </div>
 
-  <h2>Order Items</h2>
-  <ul>
-    {% for item in order.items.all %}
-      <li>{{ item.product.name }} x {{ item.quantity }} - ${{ item.price }}</li>
-    {% endfor %}
-  </ul>
+      <div class="row mb-4">
+        <div class="col-md-4">
+          <div class="p-3 rounded bg-light">
+            <p class="mb-1 text-muted">Total Amount</p>
+            <h4 class="mb-0">₹{{ order.total_amount|floatformat:2 }}</h4>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="p-3 rounded bg-light">
+            <p class="mb-1 text-muted">Payment Status</p>
+            <h5 class="mb-0">{{ order.payment_status }}</h5>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="p-3 rounded bg-light">
+            <p class="mb-1 text-muted">Is Paid</p>
+            <h5 class="mb-0">{{ order.is_paid }}</h5>
+          </div>
+        </div>
+      </div>
 
-  <form method="post" action="{% url 'order_delete' order_id=order.id %}">
-    {% csrf_token %}
-    <button type="submit">Delete Order</button>
-  </form>
+      <hr>
 
-  <a href="{% url 'order_list' %}">Back to Order List</a>
+      <h5 class="fw-bold mb-3">🛍️ Items in Your Order</h5>
+
+      <ul class="list-group mb-4">
+        {% for item in order.items.all %}
+        <li class="list-group-item d-flex justify-content-between align-items-center">
+          <div>
+            <strong>{{ item.product.name }}</strong><br>
+            <small class="text-muted">Quantity: {{ item.quantity }}</small>
+          </div>
+          <span class="fw-semibold">₹{{ item.price }}</span>
+        </li>
+        {% empty %}
+        <li class="list-group-item text-center text-muted">No items</li>
+        {% endfor %}
+      </ul>
+
+      <form method="post" action="{% url 'payment:order_detail' order.id %}">
+        {% csrf_token %}
+        <div class="d-flex gap-2 mt-4">
+
+          {% if not order.is_paid %}
+          <button name="action" value="cancel" class="btn btn-outline-danger px-4">
+            ❌ Cancel Order
+          </button>
+
+          <button name="action" value="continue" class="btn btn-primary px-4">
+            💳 Continue to Payment
+          </button>
+          {% endif %}
+
+          <a href="{% url 'customer_dashboard' %}" class="btn btn-secondary ms-auto px-4">
+            ⬅️ Back to Dashboard
+          </a>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+{% if payment_success %}
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    setTimeout(function(){ alert("Payment was successful"); }, 150);
+  });
+</script>
+{% endif %}
 {% endblock %}

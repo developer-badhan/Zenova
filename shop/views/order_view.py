@@ -86,4 +86,39 @@ class OrderDeleteView(View):
         return redirect('order_list')
 
 
+# Proceed to Payment
+class OrderCreateFromCartView(View):
+    @signin_required
+    @customer_required
+    @inject_authenticated_user
+    def get(self, request):
+        try:
+            # fetch cart items
+            from shop.services.cart_service import get_cart_items  # adjust import path if needed
+            cart_items = get_cart_items(request.user)
 
+            if not cart_items:
+                messages.error(request, "Your cart is empty.")
+                return redirect('cart')  # cart url name
+
+            items = [
+                {"product_id": item.product.id, "quantity": item.quantity}
+                for item in cart_items
+            ]
+
+            # create order
+            order = order_service.create_order(
+                user=request.user,
+                items=items,
+                coupon_code=None  # apply later if needed
+            )
+
+            if order:
+                messages.success(request, "Order created. Complete payment to place order.")
+                return redirect('order_detail', order_id=order.id)
+
+        except Exception as e:
+            print(f"[OrderCreateFromCartView] Error: {e}")
+            messages.error(request, "Unable to create order. Try again.")
+
+        return redirect('cart')

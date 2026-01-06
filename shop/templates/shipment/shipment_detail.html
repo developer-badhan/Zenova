@@ -1,31 +1,28 @@
-{% extends 'main.html' %}
+{% extends 'admin/admin_base.html' %}
 {% block title %}Shipment Details{% endblock %}
 
 {% block content %}
-<h3 class="mb-4">Shipment for Order #{{ shipment.order.id }}</h3>
+<h3 class="fw-semibold mb-4">Shipment — Order #{{ shipment.order.id }}</h3>
 
 <div class="card shadow-sm mb-4">
     <div class="card-body">
-        <h5 class="card-title">Shipping Information</h5>
-        <p class="mb-2">
-            <strong>Address:</strong><br>
-            {{ shipment.address }}
-        </p>
+        <h5 class="card-title mb-3">Shipping Information</h5>
 
+        <p><strong>Address:</strong><br> {{ shipment.address }}</p>
         {% if shipment.carrier %}
-        <p class="mb-1">
-            <strong>Carrier:</strong> {{ shipment.carrier }}
-        </p>
+            <p><strong>Carrier:</strong> {{ shipment.carrier }}</p>
         {% endif %}
-
         {% if shipment.tracking_number %}
-        <p class="mb-1">
-            <strong>Tracking Number:</strong> {{ shipment.tracking_number }}
-        </p>
+            <p><strong>Tracking Number:</strong> {{ shipment.tracking_number }}</p>
         {% endif %}
 
-        <p class="mb-1">
-            <strong>Shipped At:</strong>
+        <p><strong>Status:</strong>
+            <span class="badge {% if shipment.status == 'Delivered' %}bg-success{% elif shipment.status == 'Shipped' %}bg-primary{% else %}bg-warning{% endif %}">
+                {{ shipment.status }}
+            </span>
+        </p>
+
+        <p><strong>Shipped At:</strong>
             {% if shipment.shipped_at %}
                 {{ shipment.shipped_at|date:"M d, Y H:i" }}
             {% else %}
@@ -33,8 +30,7 @@
             {% endif %}
         </p>
 
-        <p class="mb-0">
-            <strong>Delivered At:</strong>
+        <p><strong>Delivered At:</strong>
             {% if shipment.delivered_at %}
                 {{ shipment.delivered_at|date:"M d, Y H:i" }}
             {% else %}
@@ -44,5 +40,24 @@
     </div>
 </div>
 
-<a href="{% url 'shop:order_detail' shipment.order.id %}" class="btn btn-outline-secondary">Back to Order</a>
+<!-- Action Buttons -->
+<div class="d-flex gap-2">
+    {% if shipment.status != "Delivered" %}
+        <a href="{% url 'shipment_update_tracking' shipment.order.id %}" class="btn btn-warning">
+            <i class="fa fa-map-location-dot"></i> Update Tracking
+        </a>
+    {% endif %}
+
+    {% if shipment.status == "Pending" %}
+        <a href="{% url 'shipment_mark_shipped' shipment.order.id %}" class="btn btn-primary">
+            <i class="fa fa-truck"></i> Mark as Shipped
+        </a>
+    {% endif %}
+
+    {% if shipment.status == "Shipped" %}
+        <a href="{% url 'shipment_mark_delivered' shipment.order.id %}" class="btn btn-success">
+            <i class="fa fa-check"></i> Mark as Delivered
+        </a>
+    {% endif %}
+</div>
 {% endblock %}

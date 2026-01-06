@@ -2,13 +2,20 @@ from shop.models import Shipment, Order
 from django.core.exceptions import ObjectDoesNotExist
 from django.utils import timezone
 
+
+def get_all_shipment():
+    try:
+        return Shipment.objects.all()
+    except Exception as e:
+        print(f"Error no shipment found: {e}")
+        return None
+
 def create_shipment(order_id, address, tracking_number=None, carrier=None):
     try:
         order = Order.objects.get(id=order_id)
         if hasattr(order, 'shipment'):
             print("Shipment already exists for this order.")
             return None
-
         shipment = Shipment.objects.create(
             order=order,
             address=address,

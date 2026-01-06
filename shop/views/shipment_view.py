@@ -5,6 +5,22 @@ from shop.services import shipment_service
 from shop.models import Order
 from decorators import signin_required,staff_required,customer_required,login_admin_required
 
+
+
+
+class ShipmentListView(View):
+    @login_admin_required
+    def get(self,request):
+        try:
+            shipment = shipment_service.get_all_shipment()
+            return render(request,'shipment/shipment_list.html',{'shipment':shipment})
+        except Exception as e:
+            print(f"Shipment List was not found. Error :{e}")
+            return redirect('admin_dahboard')
+
+
+
+
 class ShipmentDetailView(View):
     @signin_required
     @customer_required
