@@ -16,9 +16,7 @@ class CartDetailView(View):
     def get(self, request):
         cart = cart_service.get_cart(request.user)
         items = cart_service.get_cart_items(request.user)
-
         totals = cart_service.calculate_cart_total(cart, request)
-
         return render(request, "cart/cart_detail.html", {
             "items": items,
             **totals

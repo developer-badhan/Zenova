@@ -1,6 +1,8 @@
 from shop.models import Cart, CartItem, Product
 from django.core.exceptions import ObjectDoesNotExist
 from decimal import Decimal
+from shop.models import Coupon
+from shop.services import coupon_service
 
 
 # User Validation
@@ -213,7 +215,7 @@ def clear_cart(user):
         print(f"Error clearing cart: {e}")
         return False
 
-'''
+
 # Calculate the total price in Grand Cart
 def calculate_cart_total(cart, request=None):
     items = cart.items.select_related("product")
@@ -224,54 +226,18 @@ def calculate_cart_total(cart, request=None):
     discount_amount = Decimal("0.00")
     coupon = None
     if request:
-        coupon_data = request.session.get("applied_coupon")
-        if coupon_data:
-            coupon = coupon_data
-            discount_percent = Decimal(coupon_data["discount_percent"])
-            discount_amount = (subtotal * discount_percent) / Decimal("100")
-    grand_total = subtotal - discount_amount
-    return {
-        "subtotal": subtotal,
-        "discount": discount_amount,
-        "grand_total": grand_total,
-        "coupon": coupon,
-    }
-'''
-
-from shop.models import Coupon
-from shop.services import coupon_service
-
-def calculate_cart_total(cart, request=None):
-    items = cart.items.select_related("product")
-
-    subtotal = sum(
-        item.product.price * item.quantity
-        for item in items
-    )
-
-    discount_amount = Decimal("0.00")
-    coupon = None
-
-    if request:
         session_coupon = request.session.get("applied_coupon")
-
         if session_coupon:
             try:
                 coupon_id = int(session_coupon.get("coupon_id"))
                 coupon = Coupon.objects.get(id=coupon_id)
-
                 coupon_service.validate_coupon_for_user(request.user, coupon)
-
                 discount_amount = (
                     subtotal * coupon.discount_percent
                 ) / Decimal("100")
-
             except Exception:
-                # ⚠️ Anything suspicious → flush coupon
                 coupon_service.remove_coupon_from_session(request)
-
     grand_total = subtotal - discount_amount
-
     return {
         "subtotal": subtotal,
         "discount": discount_amount,
