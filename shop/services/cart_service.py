@@ -213,7 +213,7 @@ def clear_cart(user):
         print(f"Error clearing cart: {e}")
         return False
 
-
+'''
 # Calculate the total price in Grand Cart
 def calculate_cart_total(cart, request=None):
     items = cart.items.select_related("product")
@@ -234,5 +234,47 @@ def calculate_cart_total(cart, request=None):
         "subtotal": subtotal,
         "discount": discount_amount,
         "grand_total": grand_total,
+        "coupon": coupon,
+    }
+'''
+
+from shop.models import Coupon
+from shop.services import coupon_service
+
+def calculate_cart_total(cart, request=None):
+    items = cart.items.select_related("product")
+
+    subtotal = sum(
+        item.product.price * item.quantity
+        for item in items
+    )
+
+    discount_amount = Decimal("0.00")
+    coupon = None
+
+    if request:
+        session_coupon = request.session.get("applied_coupon")
+
+        if session_coupon:
+            try:
+                coupon_id = int(session_coupon.get("coupon_id"))
+                coupon = Coupon.objects.get(id=coupon_id)
+
+                coupon_service.validate_coupon_for_user(request.user, coupon)
+
+                discount_amount = (
+                    subtotal * coupon.discount_percent
+                ) / Decimal("100")
+
+            except Exception:
+                # ⚠️ Anything suspicious → flush coupon
+                coupon_service.remove_coupon_from_session(request)
+
+    grand_total = subtotal - discount_amount
+
+    return {
+        "subtotal": subtotal,
+        "discount": discount_amount,
+        "grand_total": max(grand_total, Decimal("0.00")),
         "coupon": coupon,
     }

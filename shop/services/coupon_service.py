@@ -101,6 +101,14 @@ def assign_coupon_to_user(coupon, user):
     return assignment
 
 
+# Get Coupons Assigned to User
+def get_coupons_assigned_to_user(user):
+    return Coupon.objects.filter(
+        couponassignment__user=user,
+        active=True
+    ).distinct()
+
+'''
 # Validate Coupon for User
 def validate_coupon_for_user(user, coupon_code):
     try:
@@ -137,20 +145,99 @@ def apply_coupon_by_id(user, coupon_id):
     return coupon  
 
 
-
-# Mark as Used or Not
+# Mark as Coupon was used or not
 def mark_coupon_used(user, coupon):
     with transaction.atomic():
+        if CouponUsage.objects.select_for_update().filter(
+            coupon=coupon,
+            user=user
+        ).exists():
+            return
         CouponUsage.objects.create(coupon=coupon, user=user)
-        coupon.used_count = CouponUsage.objects.filter(coupon=coupon).count()
+        coupon.used_count = CouponUsage.objects.filter(
+            coupon=coupon
+        ).count()
         coupon.save(update_fields=["used_count"])
+'''
+
+from django.utils import timezone
+from django.db import transaction
+from decimal import Decimal
+from shop.models import Coupon, CouponUsage, CouponAssignment
 
 
-# Get Coupons Assigned to User
-def get_coupons_assigned_to_user(user):
-    return Coupon.objects.filter(
-        couponassignment__user=user,
-        active=True
-    ).distinct()
+class CouponValidationError(Exception):
+    pass
 
+
+def validate_coupon_for_user(user, coupon: Coupon):
+    if not coupon.active:
+        raise CouponValidationError("Coupon is inactive.")
+
+    now = timezone.now()
+
+    if coupon.valid_from > now or coupon.valid_to < now:
+        raise CouponValidationError("Coupon expired.")
+
+    if coupon.used_count >= coupon.usage_limit:
+        raise CouponValidationError("Coupon usage limit reached.")
+
+    if not CouponAssignment.objects.filter(
+        coupon=coupon,
+        user=user
+    ).exists():
+        raise CouponValidationError("Coupon not assigned to user.")
+
+    if CouponUsage.objects.filter(
+        coupon=coupon,
+        user=user
+    ).exists():
+        raise CouponValidationError("Coupon already used.")
+
+    return coupon
+
+def apply_coupon_by_id(user, coupon_id):
+    try:
+        coupon = Coupon.objects.get(
+            id=coupon_id,
+            active=True
+        )
+    except Coupon.DoesNotExist:
+        raise CouponValidationError("Invalid coupon.")
+
+    return validate_coupon_for_user(user, coupon)
+
+
+
+def store_coupon_in_session(request, coupon: Coupon):
+    request.session["applied_coupon"] = {
+        "coupon_id": coupon.id,
+        "applied_at": timezone.now().isoformat(),
+    }
+    request.session.modified = True
+
+def remove_coupon_from_session(request):
+    if "applied_coupon" in request.session:
+        del request.session["applied_coupon"]
+        request.session.modified = True
+
+
+def mark_coupon_used(user, coupon):
+    with transaction.atomic():
+        if CouponUsage.objects.select_for_update().filter(
+            coupon=coupon,
+            user=user
+        ).exists():
+            return
+
+        CouponUsage.objects.create(
+            coupon=coupon,
+            user=user
+        )
+
+        coupon.used_count = CouponUsage.objects.filter(
+            coupon=coupon
+        ).count()
+
+        coupon.save(update_fields=["used_count"])
 

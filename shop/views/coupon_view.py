@@ -23,7 +23,7 @@ class CouponListView(View):
         })
 
 
-# Coupon creation view
+# Coupon creation view 
 class CouponCreateView(View):
     @login_admin_required_with_user
     def get(self, request):
@@ -47,7 +47,7 @@ class CouponCreateView(View):
             return render(request, 'coupon/coupon_create.html')
 
 
-# Coupon update view
+# Coupon update view 
 class CouponUpdateView(View):
     @login_admin_required_with_user
     def get(self, request, coupon_id):
@@ -73,7 +73,7 @@ class CouponUpdateView(View):
             return redirect('coupon_update', coupon_id=coupon_id)
 
 
-# Coupon Delete View
+# Coupon Delete View 
 class CouponDeleteView(View):
     @login_admin_required_with_user
     def get(self, request, coupon_id):
@@ -95,41 +95,7 @@ class CouponDeleteView(View):
             return redirect('coupon_list')
 
 
-# Coupon Apply View
-class CouponApplyView(View):
-    @inject_authenticated_user
-    @customer_required
-    def post(self, request, coupon_id):
-        try:
-            coupon_service.apply_coupon_by_id(user=request.user,coupon_id=coupon_id)
-            coupon = Coupon.objects.get(id=coupon_id)
-            return render(request, "partials/coupon_message.html", {
-                "type": "success",
-                "message": "🎉 Coupon applied successfully!",
-                "coupon": coupon,
-            })
-        except ValueError as e:
-            msg = str(e).lower()
-            if "expired" in msg:
-                alert_type = "danger"
-                message = "⏰ This coupon has expired."
-            elif "already used" in msg:
-                alert_type = "warning"
-                message = "ℹ️ You already used this coupon."
-            elif "usage limit" in msg:
-                alert_type = "warning"
-                message = "❌ Coupon usage limit reached."
-            else:
-                alert_type = "danger"
-                message = str(e)
-            return render(request, "partials/coupon_message.html", {
-                "type": alert_type,
-                "message": message,
-                "coupon_id": coupon_id
-            }, status=400)
-
-
-# Assign coupon to user view
+# Assign coupon to user view 
 class AssignCouponToUserView(View):
     @login_admin_required_with_user
     def post(self, request, coupon_id):
@@ -157,3 +123,104 @@ class CustomerCouponListView(View):
         coupons = coupon_service.get_coupons_assigned_to_user(user)
         return render(request, 'coupon/customer_coupon_list.html', {'coupons': coupons})
 
+'''
+# Coupon Apply View 
+class CouponApplyView(View):
+    @inject_authenticated_user
+    @customer_required
+    def post(self, request, coupon_id):
+        try:
+            coupon = coupon_service.apply_coupon_by_id(
+                user=request.user,
+                coupon_id=coupon_id
+            )
+            # Store coupon in session
+            request.session["applied_coupon"] = {
+                "id": coupon.id,
+                "code": coupon.code,
+                "discount_percent": str(coupon.discount_percent),
+            }
+            return render(request, "partials/coupon_message.html", {
+                "type": "success",
+                "message": "🎉 Coupon applied successfully!",
+                "coupon": coupon,
+            })
+        except ValueError as e:
+            msg = str(e).lower()
+            if "expired" in msg:
+                alert_type = "danger"
+                message = "⏰ This coupon has expired."
+            elif "already used" in msg:
+                alert_type = "warning"
+                message = "ℹ️ You already used this coupon."
+            elif "usage limit" in msg:
+                alert_type = "warning"
+                message = "❌ Coupon usage limit reached."
+            else:
+                alert_type = "danger"
+                message = str(e)
+            return render(request, "partials/coupon_message.html", {
+                "type": alert_type,
+                "message": message,
+                "coupon_id": coupon_id
+            }, status=400)
+'''
+
+from django.views import View
+from django.shortcuts import render
+from shop.services import coupon_service
+from shop.services.coupon_service import CouponValidationError
+
+
+class CouponApplyView(View):
+    @inject_authenticated_user
+    @customer_required
+    def post(self, request, coupon_id):
+        try:
+            # 1️⃣ Validate coupon
+            coupon = coupon_service.apply_coupon_by_id(
+                user=request.user,
+                coupon_id=coupon_id
+            )
+
+            # 2️⃣ Mark coupon as USED immediately
+            coupon_service.mark_coupon_used(
+                request.user,
+                coupon
+            )
+
+            # 3️⃣ Flush session immediately
+            coupon_service.remove_coupon_from_session(request)
+
+            return render(request, "partials/coupon_message.html", {
+                "type": "success",
+                "message": "🎉 Coupon applied successfully!",
+                "coupon": coupon,
+            })
+
+        except CouponValidationError as e:
+            coupon_service.remove_coupon_from_session(request)
+
+            msg = str(e).lower()
+
+            if "expired" in msg:
+                alert_type = "danger"
+                message = "⏰ This coupon has expired."
+            elif "already used" in msg:
+                alert_type = "warning"
+                message = "ℹ️ You already used this coupon."
+            elif "usage limit" in msg:
+                alert_type = "warning"
+                message = "❌ Coupon usage limit reached."
+            elif "assigned" in msg:
+                alert_type = "danger"
+                message = "🚫 This coupon is not assigned to you."
+            else:
+                alert_type = "danger"
+                message = str(e)
+
+            return render(request, "partials/coupon_message.html", {
+                "type": alert_type,
+                "message": message,
+                "coupon_id": coupon_id
+            }, status=400)
