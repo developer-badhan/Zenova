@@ -7,6 +7,7 @@ from decorators import signin_required,customer_required,inject_authenticated_us
 from shop.models import Product
 
 
+
 # Cart Detail View
 class CartDetailView(View):
     @signin_required
@@ -15,7 +16,8 @@ class CartDetailView(View):
     def get(self, request):
         try:
             items = cart_service.get_cart_items(request.user)
-            total_price = sum(item.product.price * item.quantity for item in items)
+            cart = cart_service.get_cart(request.user)
+            total_price, _ = cart_service.calculate_cart_total(cart)
             return render(request, 'cart/cart_detail.html', {
                 'items': items,
                 'total_price': total_price
@@ -32,7 +34,8 @@ class CartAddItemView(View):
     @inject_authenticated_user
     def get(self, request):
         products = Product.objects.all()
-        return render(request, 'cart/cart_detail.html', {'products': products})
+        items = cart_service.get_cart_items(request.user)
+        return render(request, 'cart/cart_detail.html', {'products': products , 'items':items})
 
     @signin_required
     @customer_required
