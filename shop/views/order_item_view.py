@@ -1,3 +1,6 @@
+'''
+
+
 from django.views import View
 from django.shortcuts import render, redirect
 from django.contrib import messages
@@ -113,6 +116,6 @@ class OrderItemDeleteView(View):
             print(f"[OrderItemDeleteView] Error: {e}")
             messages.error(request, "An error occurred while deleting the item.")
         return redirect('order_item_list', order_id=order_id)
-
+'''
 
 
