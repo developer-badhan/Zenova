@@ -2,7 +2,7 @@ from django.views import View
 from django.shortcuts import redirect, render
 from django.contrib import messages
 from decorators import signin_required,customer_required,inject_authenticated_user,login_admin_required
-from shop.models import Cart
+from shop.models import Cart,Order
 from shop.services import cart_service, order_service
 
 
@@ -44,8 +44,10 @@ class OrderCreateView(View):
                 cart_totals=cart_totals,
             )
             messages.success(request, "Order created successfully.")
-            return redirect("payment_start", order_id=order.id)
-
+            return redirect(
+                "choose_method",
+                order_id=order.id
+            )
         except order_service.OrderCreationError as e:
             messages.error(request, str(e))
         except Exception:
@@ -74,50 +76,24 @@ class OrderListAdminView(View):
             return redirect("admin_dashboard")
 
 
-
-
-# Order Preview page before Order Creation
-# class OrderPreviewView(View):
-#     @signin_required
-#     @customer_required
-#     @inject_authenticated_user
-#     def get(self, request):
-#         try:
-#             cart = request.user.cart
-#         except Cart.DoesNotExist:
-#             messages.error(request, "Cart not found.")
-#             return redirect("cart_detail")
-#         cart_totals = cart_service.calculate_cart_total(cart, request)
-#         context = {
-#             "cart": cart,
-#             "cart_totals": cart_totals,
-#         }
-#         return render(request, "order/order_detail.html", context)
-
-
-# Actual Order Creation
-# class OrderCreateView(View):
-#     @signin_required
-#     @customer_required
-#     @inject_authenticated_user
-#     def post(self, request):
-#         try:
-#             cart = request.user.cart
-#             cart_totals = cart_service.calculate_cart_total(cart, request)
-#             order = order_service.create_order_from_cart(
-#                 user=request.user,
-#                 cart=cart,
-#                 cart_totals=cart_totals,
-#             )
-#             messages.success(request, "Order created successfully.")
-#             return redirect("payment_start", order_id=order.id)
-#         except order_service.OrderCreationError as e:
-#             messages.error(request, str(e))
-#             return redirect("order_create_from_cart")
-#         except Exception:
-#             messages.error(request, "Unable to create order.")
-#             return redirect("order_create_from_cart")
-
+# Order Cancelation
+class OrderCancelView(View):
+    @signin_required
+    @customer_required
+    @inject_authenticated_user
+    def post(self, request, order_id):
+        try:
+            order = Order.objects.get(id=order_id, user=request.user)
+            order_service.cancel_order(order=order, request=request)
+            messages.success(request,"Order cancelled successfully. Coupon has been removed.")
+            return redirect("cart_detail")
+        except Order.DoesNotExist:
+            messages.error(request, "Order not found.")
+        except order_service.OrderCancelError as e:
+            messages.error(request, str(e))
+        except Exception:
+            messages.error(request, "Unable to cancel order.")
+        return redirect("order_preview")
 
 
 

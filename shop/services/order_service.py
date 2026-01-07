@@ -6,9 +6,13 @@ from django.db.models import Prefetch
 
 
 # Error Handling on Orders
+# # Creation Error Handle
 class OrderCreationError(Exception):
     pass
 
+# # Cancelation Error Handling
+class OrderCancelError(Exception):
+    pass
 
 # Order creation from Cart
 def create_order_from_cart(*, user, cart: Cart, cart_totals: dict):
@@ -50,3 +54,16 @@ def get_all_orders_for_admin():
         .order_by("-created_at")
     )
 
+
+# Cancel the Order
+def cancel_order(*, order: Order, request):
+    if order.is_paid:
+        raise OrderCancelError("Paid orders cannot be cancelled.")
+    with transaction.atomic():
+        order.payment_status = "cancelled"
+        order.is_paid = False
+        order.save(update_fields=["payment_status", "is_paid"])
+
+        # Flush coupon session
+        request.session.pop("applied_coupon", None)
+        request.session.modified = True

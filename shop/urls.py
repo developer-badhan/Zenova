@@ -27,6 +27,8 @@ urlpatterns = [
     path("zenova.com/order/preview/", views.OrderPreviewView.as_view(), name="order_preview"),
     path("zenova.com/order/create", views.OrderCreateView.as_view(), name="order_create"),
     path('zenova.com/orders/',views.OrderListAdminView.as_view(), name='order_list'),
+    path("zenova.com/order/<int:order_id>/cancel/",views.OrderCancelView.as_view(),name="order_cancel"),
+
 
     # Cart Routes
     path('zenova.com/cart/', views.CartDetailView.as_view(), name='cart_detail'),
