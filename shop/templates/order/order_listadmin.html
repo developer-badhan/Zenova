@@ -1,0 +1,132 @@
+{% extends 'admin/admin_base.html' %}
+{% load static %}
+{% block title %}Order Management{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+
+  <!-- Header -->
+  <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-4">
+    <div>
+      <h4 class="fw-bold mb-0">
+        <i class="fa fa-shopping-cart me-2 text-primary"></i> All Orders
+      </h4>
+      <p class="text-muted small mb-0">
+        Track user orders, spending & product demand
+      </p>
+    </div>
+    <a href="{% url 'admin_dashboard' %}"
+       class="btn btn-outline-danger btn-sm shadow-sm px-3 py-2">
+      <i class="fa fa-arrow-left me-1"></i> Return
+    </a>
+  </div>
+
+  <!-- Orders Table -->
+  <div class="card shadow-sm border-0 rounded-4">
+    <div class="card-body p-0">
+      <div class="table-responsive">
+        <table class="table align-middle mb-0">
+          <thead class="bg-light text-secondary small text-uppercase">
+            <tr>
+              <th>No.</th>
+              <th>User</th>
+              <th>Email</th>
+              <th>Products</th>
+              <th>Total Qty</th>
+              <th>Amount (₹)</th>
+              <th>Coupon</th>
+              <th>Payment</th>
+              <th>Status</th>
+              <th>Created At</th>
+            </tr>
+          </thead>
+          <tbody>
+
+            {% for order in orders %}
+            <tr>
+              <td>{{ forloop.counter }}</td>
+
+              <td class="fw-semibold">
+                {{ order.user.get_full_name|default:order.user.username }}
+              </td>
+
+              <td class="small text-muted">
+                {{ order.user.email }}
+              </td>
+
+              <!-- Product List -->
+              <td>
+                <ul class="small mb-0 ps-3">
+                  {% for item in order.items.all %}
+                  <li>
+                    {{ item.product.name }}
+                    <span class="text-muted">
+                      (×{{ item.quantity }})
+                    </span>
+                  </li>
+                  {% endfor %}
+                </ul>
+              </td>
+
+              <!-- Total Quantity -->
+              <td class="fw-semibold">
+                {{ order.items.count }}
+              </td>
+
+              <!-- Amount -->
+              <td class="fw-bold">
+                ₹{{ order.total_amount }}
+              </td>
+
+              <!-- Coupon -->
+              <td>
+                {% if order.coupon %}
+                  <span class="badge bg-success-subtle text-success">
+                    {{ order.coupon.code }}
+                  </span>
+                {% else %}
+                  <span class="text-muted">—</span>
+                {% endif %}
+              </td>
+
+              <!-- Payment -->
+              <td>
+                {% if order.is_paid %}
+                  <span class="badge bg-success-subtle text-success">
+                    Paid
+                  </span>
+                {% else %}
+                  <span class="badge bg-warning-subtle text-dark">
+                    Pending
+                  </span>
+                {% endif %}
+              </td>
+
+              <!-- Order Status -->
+              <td>
+                <span class="badge bg-secondary-subtle text-dark">
+                  {{ order.payment_status|capfirst }}
+                </span>
+              </td>
+
+              <!-- Date -->
+              <td class="small">
+                {{ order.created_at|date:"Y-m-d h:i A" }}
+              </td>
+            </tr>
+            {% empty %}
+            <tr>
+              <td colspan="10" class="text-muted py-4 text-center">
+                No orders found.
+              </td>
+            </tr>
+            {% endfor %}
+
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+</div>
+{% endblock %}

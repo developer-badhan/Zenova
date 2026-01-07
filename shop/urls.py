@@ -24,16 +24,9 @@ urlpatterns = [
     path('zenova.com/categories/<int:category_id>/delete/', views.CategoryDeleteView.as_view(), name='category_delete'),
 
     # Product Order Routes
-    path('zenova.com/orders/', views.OrderListView.as_view(), name='order_list'),
-    path('zenova.com/orders/create/', views.OrderCreateView.as_view(), name='order_create'),
-    path('zenova.com/orders/<int:order_id>/', views.OrderDetailView.as_view(), name='order_detail'),
-    path('zenova.com/orders/<int:order_id>/delete/', views.OrderDeleteView.as_view(), name='order_delete'),
-
-    # Product Order Item Routes
-    path('zenova.com/orders/<int:order_id>/items/', views.OrderItemListView.as_view(), name='order_item_list'),
-    path('zenova.com/orders/<int:order_id>/items/create/', views.OrderItemCreateView.as_view(), name='order_item_create'),
-    path('zenova.com/orders/items/<int:item_id>/edit/', views.OrderItemUpdateView.as_view(), name='order_item_update'),
-    path('zenova.com/orders/items/<int:item_id>/delete/', views.OrderItemDeleteView.as_view(), name='order_item_delete'),
+    path("zenova.com/order/preview/", views.OrderPreviewView.as_view(), name="order_preview"),
+    path("zenova.com/order/create", views.OrderCreateView.as_view(), name="order_create"),
+    path('zenova.com/orders/',views.OrderListAdminView.as_view(), name='order_list'),
 
     # Cart Routes
     path('zenova.com/cart/', views.CartDetailView.as_view(), name='cart_detail'),
@@ -77,10 +70,6 @@ urlpatterns = [
 
     # Customer Routes for Coupon Management
     path('zenova.com/my-coupons/', views.CustomerCouponListView.as_view(), name='customer_coupon_list'),
-
-    # Proceed to Payment
-    path("order/create/from-cart/", views.OrderCreateFromCartView.as_view(), name="order_create_from_cart"),
-
 
     # Policy Terms
     path('terms-of-use/', TemplateView.as_view(template_name="policies/terms_of_use.html"), name="terms_of_use"),

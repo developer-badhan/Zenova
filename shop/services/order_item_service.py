@@ -1,3 +1,6 @@
+'''
+
+
 from shop.models import OrderItem, Product
 from django.core.exceptions import ObjectDoesNotExist
 
@@ -73,3 +76,4 @@ def delete_order_item(item_id):
     except Exception as e:
         print(f"Error deleting order item with ID {item_id}: {e}")
         return False
+'''

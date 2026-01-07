@@ -1,4 +1,165 @@
 from django.views import View
+from django.shortcuts import redirect, render
+from django.contrib import messages
+from decorators import signin_required,customer_required,inject_authenticated_user,login_admin_required
+from shop.models import Cart
+from shop.services import cart_service, order_service
+
+
+
+# Order Preview before Creation
+class OrderPreviewView(View):
+    @signin_required
+    @customer_required
+    @inject_authenticated_user
+    def get(self, request):
+        try:
+            cart = request.user.cart
+        except Cart.DoesNotExist:
+            messages.error(request, "Cart not found.")
+            return redirect("cart_detail")
+        if not cart.items.exists():
+            messages.warning(request, "Your cart is empty.")
+            return redirect("cart_detail")
+        cart_totals = cart_service.calculate_cart_total(cart, request)
+        context = {
+            "cart": cart,
+            "cart_totals": cart_totals,
+        }
+        return render(request, "order/order_detail.html", context)
+
+
+# Order Creation
+class OrderCreateView(View):
+    @signin_required
+    @customer_required
+    @inject_authenticated_user
+    def post(self, request):
+        try:
+            cart = request.user.cart
+            cart_totals = cart_service.calculate_cart_total(cart, request)
+            order = order_service.create_order_from_cart(
+                user=request.user,
+                cart=cart,
+                cart_totals=cart_totals,
+            )
+            messages.success(request, "Order created successfully.")
+            return redirect("payment_start", order_id=order.id)
+
+        except order_service.OrderCreationError as e:
+            messages.error(request, str(e))
+        except Exception:
+            messages.error(request, "Unable to create order.")
+        context = {
+            "cart": cart,
+            "cart_totals": cart_totals,
+        }
+        return render(request, "order/order_create.html", context)
+
+
+# Order List 
+class OrderListAdminView(View):
+    @login_admin_required
+    def get(self, request):
+        try:
+            orders = order_service.get_all_orders_for_admin()
+            return render(
+                request,
+                "order/order_listadmin.html",
+                {"orders": orders}
+            )
+        except Exception as e:
+            print(f"[OrderListAdminView] Error: {e}")
+            messages.error(request, "Failed to load orders.")
+            return redirect("admin_dashboard")
+
+
+
+
+# Order Preview page before Order Creation
+# class OrderPreviewView(View):
+#     @signin_required
+#     @customer_required
+#     @inject_authenticated_user
+#     def get(self, request):
+#         try:
+#             cart = request.user.cart
+#         except Cart.DoesNotExist:
+#             messages.error(request, "Cart not found.")
+#             return redirect("cart_detail")
+#         cart_totals = cart_service.calculate_cart_total(cart, request)
+#         context = {
+#             "cart": cart,
+#             "cart_totals": cart_totals,
+#         }
+#         return render(request, "order/order_detail.html", context)
+
+
+# Actual Order Creation
+# class OrderCreateView(View):
+#     @signin_required
+#     @customer_required
+#     @inject_authenticated_user
+#     def post(self, request):
+#         try:
+#             cart = request.user.cart
+#             cart_totals = cart_service.calculate_cart_total(cart, request)
+#             order = order_service.create_order_from_cart(
+#                 user=request.user,
+#                 cart=cart,
+#                 cart_totals=cart_totals,
+#             )
+#             messages.success(request, "Order created successfully.")
+#             return redirect("payment_start", order_id=order.id)
+#         except order_service.OrderCreationError as e:
+#             messages.error(request, str(e))
+#             return redirect("order_create_from_cart")
+#         except Exception:
+#             messages.error(request, "Unable to create order.")
+#             return redirect("order_create_from_cart")
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+'''
+from django.views import View
 from django.shortcuts import render, redirect
 from django.contrib import messages
 from django.http import HttpResponseNotFound
@@ -122,3 +283,5 @@ class OrderCreateFromCartView(View):
             messages.error(request, "Unable to create order. Try again.")
 
         return redirect('cart')
+
+'''
