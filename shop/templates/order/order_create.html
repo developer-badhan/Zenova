@@ -1,40 +1,69 @@
 {% extends 'home.html' %}
+{% load static %}
+
+{% block title %}Confirm Order{% endblock %}
 
 {% block content %}
-  <h1>Create New Order</h1>
-  
-  <form method="post">
-    {% csrf_token %}
-    <div id="order-items">
-      <div class="order-item">
-        <label for="product_id_1">Product ID:</label>
-        <input type="text" id="product_id_1" name="product_id_1" required>
-        <label for="quantity_1">Quantity:</label>
-        <input type="number" id="quantity_1" name="quantity_1" required>
-      </div>
-    </div>
-    <button type="button" id="add-item-btn">Add Another Item</button>
+<div class="container my-5">
 
-    <div>
-      <label for="coupon_code">Coupon Code (optional):</label>
-      <input type="text" id="coupon_code" name="coupon_code">
-    </div>
+  <div class="card border-0 shadow-lg">
+    <div class="card-body p-4">
 
-    <button type="submit">Place Order</button>
-  </form>
+      <h3 class="mb-2 text-danger">⚠️ Confirm Your Order</h3>
+      <p class="text-muted mb-4">
+        Once confirmed, this order will be created and moved to payment.
+      </p>
 
-  <script>
-    document.getElementById('add-item-btn').addEventListener('click', function() {
-      let itemCount = document.querySelectorAll('.order-item').length + 1;
-      const newItem = `
-        <div class="order-item">
-          <label for="product_id_${itemCount}">Product ID:</label>
-          <input type="text" id="product_id_${itemCount}" name="product_id_${itemCount}" required>
-          <label for="quantity_${itemCount}">Quantity:</label>
-          <input type="number" id="quantity_${itemCount}" name="quantity_${itemCount}" required>
+      <!-- ORDER ITEMS -->
+      <h5 class="fw-bold mb-3">📦 Order Items</h5>
+
+      <ul class="list-group mb-4">
+        {% for item in cart.items.all %}
+        <li class="list-group-item d-flex justify-content-between align-items-center">
+          <div>
+            <strong>{{ item.product.name }}</strong>
+            <div class="small text-muted">
+              Quantity: {{ item.quantity }}
+            </div>
+          </div>
+          <span class="fw-semibold">
+            ₹{{ item.product.price|floatformat:2 }}
+          </span>
+        </li>
+        {% endfor %}
+      </ul>
+
+      <!-- FINAL TOTAL -->
+      <div class="alert alert-warning mb-4">
+        <div class="d-flex justify-content-between align-items-center">
+          <span class="fw-bold">Total Payable</span>
+          <span class="fs-4 fw-bold">
+            ₹{{ cart_totals.grand_total|floatformat:2 }}
+          </span>
         </div>
-      `;
-      document.getElementById('order-items').insertAdjacentHTML('beforeend', newItem);
-    });
-  </script>
+
+        {% if cart_totals.coupon %}
+        <div class="small mt-2">
+          Coupon will be applied after payment:
+          <strong>{{ cart_totals.coupon.code }}</strong>
+        </div>
+        {% endif %}
+      </div>
+
+      <!-- ACTION -->
+      <form method="post" action="{% url 'order_create' %}">
+        {% csrf_token %}
+        <div class="d-flex gap-2">
+          <a href="{% url 'order_preview' %}" class="btn btn-outline-secondary">
+            ⬅ Back to Summary
+          </a>
+          <button type="submit" class="btn btn-danger ms-auto">
+            ✅ Confirm & Place Order
+          </button>
+        </div>
+      </form>
+
+    </div>
+  </div>
+</div>
 {% endblock %}
