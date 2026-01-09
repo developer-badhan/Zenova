@@ -99,3 +99,20 @@ class OrderCancelView(View):
         return redirect("order_preview")
 
 
+# Order Listing for User
+class OrderListCustomerView(View):
+    @signin_required
+    @customer_required
+    @inject_authenticated_user
+    def get(self, request):
+        try:
+            orders = order_service.get_orders_for_user(user=request.user)
+            return render(
+                request,
+                "order/order_list.html",
+                {"orders": orders}
+            )
+        except Exception as e:
+            print(f"[OrderListCustomerView] Error: {e}")
+            messages.error(request, "Unable to load your orders.")
+            return redirect("home")

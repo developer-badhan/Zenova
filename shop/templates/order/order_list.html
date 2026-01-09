@@ -1,0 +1,101 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}My Orders{% endblock %}
+
+{% block content %}
+<link rel="stylesheet" href="{% static 'css/order.css' %}">
+
+<div class="container mt-5">
+  <h3 class="mb-4 text-center fw-bold">📦 My Orders</h3>
+
+  {% if orders %}
+    <div class="row g-4">
+      {% for order in orders %}
+      <div class="col-md-6">
+        <div class="card shadow-sm h-100">
+
+          <div class="card-header d-flex justify-content-between align-items-center">
+            <span class="fw-bold">
+              Order #{{ order.id }}
+            </span>
+            <span class="badge
+              {% if order.payment_status == 'paid' %} bg-success
+              {% elif order.payment_status == 'cancelled' %} bg-danger
+              {% else %} bg-warning text-dark {% endif %}">
+              {{ order.payment_status|title }}
+            </span>
+          </div>
+
+          <div class="card-body">
+            <p class="mb-1 text-muted">
+              <strong>Date:</strong>
+              {{ order.created_at|date:"Y-m-d H:i" }}
+            </p>
+
+            <p class="mb-1">
+              <strong>Total:</strong>
+              ₹{{ order.total_amount }}
+            </p>
+
+            {% if order.coupon %}
+              <p class="mb-2 text-success">
+                <strong>Coupon Applied:</strong> {{ order.coupon.code }}
+              </p>
+            {% endif %}
+
+            <hr>
+
+            <h6 class="fw-bold mb-2">Items</h6>
+            <ul class="list-group list-group-flush">
+              {% for item in order.items.all %}
+                <li class="list-group-item d-flex justify-content-between">
+                  <span>
+                    {{ item.product.name }} × {{ item.quantity }}
+                  </span>
+                  <span>
+                    ₹{{ item.price }}
+                  </span>
+                </li>
+              {% endfor %}
+            </ul>
+          </div>
+
+          <div class="card-footer d-flex gap-2">
+            {% if not order.is_paid and order.payment_status != 'cancelled' %}
+              <form method="post"
+                    action="{% url 'order_cancel' order.id %}"
+                    class="w-100">
+                {% csrf_token %}
+                <button class="btn btn-outline-danger btn-sm w-100">
+                  Cancel Order
+                </button>
+              </form>
+            {% endif %}
+
+            <a href="{% url 'cart_detail' %}"
+               class="btn btn-outline-secondary btn-sm w-100">
+              Shop More
+            </a>
+          </div>
+
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="text-center py-5">
+      <img src="https://cdn-icons-png.flaticon.com/512/4076/4076504.png"
+           alt="No Orders"
+           width="110"
+           class="mb-3">
+      <p class="fs-5 text-muted">
+        You haven’t placed any orders yet.
+      </p>
+      <a href="{% url 'cart_detail' %}" class="btn btn-primary">
+        Start Shopping
+      </a>
+    </div>
+  {% endif %}
+</div>
+
+{% endblock %}

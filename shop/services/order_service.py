@@ -79,3 +79,19 @@ def cancel_order(*, order: Order, request):
         # Flush coupon session
         request.session.pop("applied_coupon", None)
         request.session.modified = True
+
+
+# Get Order List 
+def get_orders_for_user(*, user):
+    return (
+        Order.objects
+        .filter(user=user)
+        .select_related("coupon", "payment")
+        .prefetch_related(
+            Prefetch(
+                "items",
+                queryset=OrderItem.objects.select_related("product")
+            )
+        )
+        .order_by("-created_at")
+    )
