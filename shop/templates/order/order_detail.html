@@ -60,7 +60,7 @@
       </div>
 
       <!-- ACTION -->
-      <form method="post" action="{% url 'order_create' %}">
+      <form method="post">
         {% csrf_token %}
         <div class="d-flex gap-2">
           <a href="{% url 'cart_detail' %}" class="btn btn-outline-secondary">
@@ -70,8 +70,7 @@
             Continue to Confirmation →
           </button>
         </div>
-      </form>
-
+      </form> 
     </div>
   </div>
 </div>

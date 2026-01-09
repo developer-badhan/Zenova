@@ -6,13 +6,15 @@ from django.db.models import Prefetch
 
 
 # Error Handling on Orders
-# # Creation Error Handle
+# Creation Error Handle
 class OrderCreationError(Exception):
     pass
 
-# # Cancelation Error Handling
+
+# Cancelation Error Handling
 class OrderCancelError(Exception):
     pass
+
 
 # Order creation from Cart
 def create_order_from_cart(*, user, cart: Cart, cart_totals: dict):
@@ -20,6 +22,16 @@ def create_order_from_cart(*, user, cart: Cart, cart_totals: dict):
         raise OrderCreationError("Cart is empty.")
     if cart_totals["grand_total"] <= Decimal("0.00"):
         raise OrderCreationError("Invalid order amount.")
+
+    # Reuse existing pending order
+    recent_order = (
+        Order.objects
+        .filter(user=user, is_paid=False, payment_status="pending")
+        .order_by("-created_at")
+        .first()
+    )
+    if recent_order:
+        return recent_order
     with transaction.atomic():
         order = Order.objects.create(
             user=user,
