@@ -1,0 +1,71 @@
+.payment-card {
+    max-width: 600px;
+    margin: auto;
+}
+
+.payment-option {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    padding: 16px;
+    cursor: pointer;
+    transition: all 0.25s ease;
+    border-radius: 10px;
+}
+
+.payment-option:hover {
+    background: #f8f9fa;
+    transform: translateY(-2px);
+}
+
+.active-method {
+    border: 2px solid #198754;
+    background: #e9f7ef;
+}
+
+.pay-icon {
+    width: 40px;
+    height: 40px;
+}
+
+/* Custom Modal */
+.custom-modal {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.6);
+    z-index: 9999;
+}
+
+.custom-modal-content {
+    background: #fff;
+    padding: 25px;
+    border-radius: 12px;
+    max-width: 360px;
+    margin: 15% auto;
+    text-align: center;
+    animation: pop 0.3s ease;
+}
+
+.popup-logo {
+    width: 60px;
+    height: auto;
+    margin-bottom: 12px;
+    animation: pop 0.3s ease;
+}
+
+.google-pay-text {
+    color: #34A853;
+    font-weight: 600;
+}
+
+.phonepe-text {
+    color: #6739B7;
+    font-weight: 600;
+}
+
+
+@keyframes pop {
+    from { transform: scale(0.8); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+}
