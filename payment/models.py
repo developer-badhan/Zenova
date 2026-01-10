@@ -1,4 +1,3 @@
-# payment/models.py
 import uuid
 from enum import IntEnum
 from django.db import models
@@ -26,7 +25,6 @@ def generate_txn_id(prefix="ZPAY"):
 
 class Payment(models.Model):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='payments')
-    # Keep order FK optional (we will link Order.payment -> Payment as OneToOne), but store order_id for ease.
     order_id = models.PositiveIntegerField(null=True, blank=True)
     amount = models.DecimalField(max_digits=12, decimal_places=2)
     method = models.IntegerField(choices=PaymentMethod.choices(), default=PaymentMethod.ZPAY.value)
