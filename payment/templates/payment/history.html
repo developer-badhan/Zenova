@@ -2,32 +2,137 @@
 {% block title %}Payment History{% endblock %}
 
 {% block content %}
-<div class="container my-5">
-    <h4 class="mb-4">Payment History</h4>
+<style>
+    /* Container animation */
+    .fade-in {
+        animation: fadeInUp 0.7s ease-in-out;
+    }
 
-    <table class="table table-bordered">
-        <thead>
-            <tr>
-                <th>Order</th>
-                <th>Amount</th>
-                <th>Status</th>
-                <th>Txn ID</th>
-                <th>Date</th>
-            </tr>
-        </thead>
-        <tbody>
-        {% for p in payments %}
-            <tr>
-                <td>#{{ p.order_id }}</td>
-                <td>₹{{ p.amount }}</td>
-                <td>{{ p.get_status_display }}</td>
-                <td>{{ p.transaction_id|default:"—" }}</td>
-                <td>{{ p.created_at }}</td>
-            </tr>
-        {% empty %}
-            <tr><td colspan="5" class="text-center">No payments yet</td></tr>
-        {% endfor %}
-        </tbody>
-    </table>
+    @keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    /* Card style */
+    .history-card {
+        background: rgba(255, 255, 255, 0.95);
+        border-radius: 16px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+        padding: 25px;
+    }
+
+    /* Table styling */
+    .table thead {
+        background: linear-gradient(135deg, #4e73df, #224abe);
+        color: #fff;
+    }
+
+    .table th, .table td {
+        vertical-align: middle;
+        text-align: center;
+    }
+
+    .table tbody tr {
+        transition: all 0.3s ease;
+    }
+
+    .table tbody tr:hover {
+        background-color: #f8f9fc;
+        transform: scale(1.01);
+        box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+    }
+
+    /* Status badge */
+    .status-badge {
+        padding: 6px 12px;
+        border-radius: 20px;
+        font-size: 0.85rem;
+        font-weight: 600;
+    }
+
+    .status-success { background: #d4edda; color: #155724; }
+    .status-pending { background: #fff3cd; color: #856404; }
+    .status-failed  { background: #f8d7da; color: #721c24; }
+
+    /* Empty state */
+    .empty-state {
+        padding: 40px 20px;
+        text-align: center;
+        color: #6c757d;
+    }
+
+    .empty-state i {
+        font-size: 50px;
+        margin-bottom: 15px;
+        color: #dee2e6;
+    }
+</style>
+
+<div class="container my-5 fade-in">
+    <div class="history-card">
+        <h4 class="mb-4 fw-bold text-primary">💳 Payment History</h4>
+
+        {% if payments %}
+        <div class="table-responsive">
+            <table class="table table-bordered align-middle">
+                <thead>
+                    <tr>
+                        <th>Order</th>
+                        <th>Amount</th>
+                        <th>Status</th>
+                        <th>Txn ID</th>
+                        <th>Date</th>
+                    </tr>
+                </thead>
+                <tbody>
+                {% for p in payments %}
+                    <tr class="payment-row">
+                        <td>{{ p.order_id }}</td>
+                        <td class="fw-semibold">₹{{ p.amount }}</td>
+                        <td>
+                            <span class="status-badge 
+                                {% if p.status == 'SUCCESS' %}status-success
+                                {% elif p.status == 'PENDING' %}status-pending
+                                {% else %}status-failed{% endif %}">
+                                {{ p.get_status_display }}
+                            </span>
+                        </td>
+                        <td>{{ p.transaction_id|default:"—" }}</td>
+                        <td>{{ p.created_at|date:"d M Y, h:i A" }}</td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+            <div class="empty-state fade-in">
+                <i class="bi bi-receipt"></i>
+                <h5>No records found</h5>
+                <p>You haven’t made any payments yet.<br>Once you do, they’ll appear here.</p>
+            </div>
+        {% endif %}
+    </div>
 </div>
+
+<script>
+    // Smooth row animation
+    document.addEventListener("DOMContentLoaded", () => {
+        const rows = document.querySelectorAll(".payment-row");
+        rows.forEach((row, index) => {
+            row.style.opacity = 0;
+            row.style.transform = "translateY(10px)";
+            setTimeout(() => {
+                row.style.transition = "all 0.4s ease";
+                row.style.opacity = 1;
+                row.style.transform = "translateY(0)";
+            }, index * 80);
+        });
+    });
+</script>
 {% endblock %}
