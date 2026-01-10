@@ -164,3 +164,9 @@ def mark_coupon_used(user, coupon):
         coupon.used_count = CouponUsage.objects.filter(coupon=coupon).count()
         coupon.save(update_fields=["used_count"])
 
+
+# Flush Coupon after use or Cancel Order
+def flush_coupon_session(request):
+    if "applied_coupon" in request.session:
+        del request.session["applied_coupon"]
+        request.session.modified = True

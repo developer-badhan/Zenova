@@ -33,6 +33,7 @@ class ChoosePaymentMethodView(View):
 
 
 # Z-Payment View
+# Z-Payment View
 class ZPayPaymentView(View):
     @customer_required
     @inject_authenticated_user
@@ -43,23 +44,45 @@ class ZPayPaymentView(View):
         except Order.DoesNotExist:
             messages.error(request, "Order not found.")
             return redirect("cart_detail")
+
+        if order.is_paid:
+            messages.warning(request, "Order already paid.")
+            return redirect("order_list")
+
         payment = services.create_payment(user=request.user, order=order)
-        context = {
-            "order": order, 
+
+        return render(request, "payment/zpayment.html", {
+            "order": order,
             "payment": payment
-            }
-        return render(request,"payment/zpayment.html",context)
+        })
 
     @customer_required
     @inject_authenticated_user
     def post(self, request, order_id):
         Order = apps.get_model('shop', 'Order')
-        order = Order.objects.get(id=order_id, user=request.user)
+        try:
+            order = Order.objects.get(id=order_id, user=request.user)
+        except Order.DoesNotExist:
+            messages.error(request, "Order not found.")
+            return redirect("cart_detail")
+
+        if order.is_paid:
+            messages.warning(request, "Order already paid.")
+            return redirect("order_list")
+
         payment = services.create_payment(user=request.user, order=order)
-        success = services.process_zpay_payment(payment=payment, order=order)
+
+        # 🔴 PASS request explicitly
+        success = services.process_zpay_payment(
+            payment=payment,
+            order=order,
+            request=request
+        )
+
         if success:
             messages.success(request, "Payment successful 🎉")
             return redirect("order_list")
+
         messages.error(request, "Payment failed. Please try again.")
         return redirect("payment:zpay_payment", order_id=order.id)
 

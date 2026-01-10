@@ -1,7 +1,9 @@
 from decimal import Decimal
+from urllib import request
 from django.db import transaction
 from shop.models import Order, OrderItem, Cart
 from django.db.models import Prefetch
+from shop.services import coupon_service
 
 
 
@@ -31,6 +33,7 @@ def create_order_from_cart(*, user, cart: Cart, cart_totals: dict):
         .first()
     )
     if recent_order:
+        coupon_service.flush_coupon_session(request)
         return recent_order
     with transaction.atomic():
         order = Order.objects.create(
@@ -75,9 +78,7 @@ def cancel_order(*, order: Order, request):
         order.payment_status = "cancelled"
         order.is_paid = False
         order.save(update_fields=["payment_status", "is_paid"])
-
-        # Flush coupon session
-        request.session.pop("applied_coupon", None)
+        coupon_service.flush_coupon_session(request)
         request.session.modified = True
 
 
