@@ -244,3 +244,24 @@ def calculate_cart_total(cart, request=None):
         "grand_total": max(grand_total, Decimal("0.00")),
         "coupon": coupon,
     }
+
+
+# Remove Item After Payment
+def remove_order_items_from_cart(*, user, order):
+    if not is_valid_user(user):
+        return False
+    try:
+        cart = get_cart(user)
+        if not cart:
+            return False
+        order_product_ids = (
+            order.items.values_list("product_id", flat=True)
+        )
+        CartItem.objects.filter(
+            cart=cart,
+            product_id__in=order_product_ids
+        ).delete()
+        return True
+    except Exception as e:
+        print(f"Error removing paid items from cart: {e}")
+        return False

@@ -2,7 +2,6 @@ from .home_view import *
 from .cart_view import *
 from .category_view import *
 from .order_view import *
-from .order_item_view import *
 from .review_view import *
 from .wishlist_view import *
 from .coupon_view import *

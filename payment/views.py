@@ -6,6 +6,7 @@ from django.contrib import messages
 from payment.models import Payment, PaymentMethod
 from decorators import inject_authenticated_user, customer_required 
 from payment import services
+from shop.services import cart_service
 
 
 
@@ -33,7 +34,6 @@ class ChoosePaymentMethodView(View):
 
 
 # Z-Payment View
-# Z-Payment View
 class ZPayPaymentView(View):
     @customer_required
     @inject_authenticated_user
@@ -44,13 +44,10 @@ class ZPayPaymentView(View):
         except Order.DoesNotExist:
             messages.error(request, "Order not found.")
             return redirect("cart_detail")
-
         if order.is_paid:
             messages.warning(request, "Order already paid.")
             return redirect("order_list")
-
         payment = services.create_payment(user=request.user, order=order)
-
         return render(request, "payment/zpayment.html", {
             "order": order,
             "payment": payment
@@ -65,24 +62,19 @@ class ZPayPaymentView(View):
         except Order.DoesNotExist:
             messages.error(request, "Order not found.")
             return redirect("cart_detail")
-
         if order.is_paid:
             messages.warning(request, "Order already paid.")
             return redirect("order_list")
-
         payment = services.create_payment(user=request.user, order=order)
-
-        # 🔴 PASS request explicitly
         success = services.process_zpay_payment(
             payment=payment,
             order=order,
             request=request
         )
-
         if success:
             messages.success(request, "Payment successful 🎉")
+            cart_service.remove_order_items_from_cart(user=request.user,order=order)
             return redirect("order_list")
-
         messages.error(request, "Payment failed. Please try again.")
         return redirect("payment:zpay_payment", order_id=order.id)
 
