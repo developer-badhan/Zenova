@@ -3,36 +3,66 @@
 {% block title %}Z-Pay{% endblock %}
 
 {% block content %}
-<link rel="stylesheet" href="{% static 'css/payment.css' %}">
+<link rel="stylesheet" href="{% static 'css/zpay.css' %}">
 
 <div class="container my-5">
-    <div class="card shadow rounded-4 text-center payment-card">
-        <div class="card-body p-5">
+    <div class="zpay-wrapper">
+        <div class="zpay-card">
 
-            <img src="{% static 'images/zpay.png' %}" width="80" class="mb-3">
+            <img src="{% static 'images/zpay.png' %}" class="zpay-logo">
 
-            <h4 class="fw-bold">Processing Payment</h4>
-            <p class="text-muted">
-                Order #{{ order.id }} <br>
-                Amount: ₹{{ payment.amount }}
+            <h3 class="zpay-title">Z-Pay Secure Checkout</h3>
+
+            <p class="zpay-subtitle">
+                Order <strong>#{{ order.id }}</strong><br>
+                Payable Amount: <strong>₹{{ payment.amount }}</strong>
             </p>
 
-            <div class="spinner-border text-success my-4" role="status"></div>
+            <div class="zpay-loader">
+                <div class="spinner"></div>
+                <span>Waiting for confirmation…</span>
+            </div>
 
-            <form method="post">
+            <form method="post" id="paymentForm">
                 {% csrf_token %}
-                <button class="btn btn-success px-4 py-2">
+                <button type="submit" class="zpay-btn">
                     Simulate Payment
                 </button>
             </form>
 
-            {% if payment.status == 3 %}
-                <div class="mt-3 text-danger fw-semibold">
-                    Payment failed. Try again.
-                </div>
-            {% endif %}
-
         </div>
     </div>
 </div>
+
+<!-- ===== POPUP MODAL ===== -->
+<div id="paymentPopup" class="popup-overlay hidden">
+    <div class="popup-card">
+        <div id="popupIcon" class="popup-icon"></div>
+        <h4 id="popupTitle"></h4>
+        <p id="popupMessage"></p>
+        <button onclick="closePopup()">Continue</button>
+    </div>
+</div>
+
+<!-- ===== TOAST NOTIFICATION ===== -->
+<div id="toast" class="toast hidden">
+    <span id="toastIcon"></span>
+    <span id="toastText"></span>
+</div>
+
+<!-- ===== CONFETTI ===== -->
+<canvas id="confettiCanvas"></canvas>
+
+<!-- ===== DJANGO MESSAGE BRIDGE (IMPORTANT) ===== -->
+{% if messages %}
+    {% for message in messages %}
+        <div
+            class="django-message"
+            data-type="{{ message.tags }}"
+            data-text="{{ message }}"
+        ></div>
+    {% endfor %}
+{% endif %}
+
+<script src="{% static 'js/zpay.js' %}"></script>
 {% endblock %}

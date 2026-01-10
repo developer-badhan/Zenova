@@ -38,8 +38,9 @@
                 </div>
 
                 <!-- Z-Pay (ACTIVE) -->
-                <form method="post" action="{% url 'payment:zpay_payment' order.id %}">
+                <form method="post" action="{% url 'payment:choose_method' order.id %}">
                     {% csrf_token %}
+                    <input type="hidden" name="method" value="1">
                     <button type="submit" class="list-group-item payment-option active-method w-100 text-start">
                         <img src="{% static 'images/zpay.png' %}" class="pay-icon">
                         <div>
@@ -48,9 +49,7 @@
                         </div>
                     </button>
                 </form>
-
             </div>
-
         </div>
     </div>
 </div>
@@ -59,20 +58,17 @@
 <div id="comingSoonModal" class="custom-modal">
     <div class="custom-modal-content">
         <img id="popupLogo" class="popup-logo" src="" alt="" />
-
         <h5 id="modalTitle">
             <span id="paymentName"></span> - Coming Soon
         </h5>
-
         <p>
             This payment method is not connected yet.<br>
             It will be available soon 🚀
         </p>
-
         <button onclick="closeModal()" class="btn btn-dark mt-2">OK</button>
     </div>
 </div>
 
-
 <script src="{% static 'js/payment.js' %}"></script>
+
 {% endblock %}
