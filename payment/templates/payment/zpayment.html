@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Z-Pay{% endblock %}
+
+{% block content %}
+<link rel="stylesheet" href="{% static 'css/payment.css' %}">
+
+<div class="container my-5">
+    <div class="card shadow rounded-4 text-center payment-card">
+        <div class="card-body p-5">
+
+            <img src="{% static 'images/zpay.png' %}" width="80" class="mb-3">
+
+            <h4 class="fw-bold">Processing Payment</h4>
+            <p class="text-muted">
+                Order #{{ order.id }} <br>
+                Amount: ₹{{ payment.amount }}
+            </p>
+
+            <div class="spinner-border text-success my-4" role="status"></div>
+
+            <form method="post">
+                {% csrf_token %}
+                <button class="btn btn-success px-4 py-2">
+                    Simulate Payment
+                </button>
+            </form>
+
+            {% if payment.status == 3 %}
+                <div class="mt-3 text-danger fw-semibold">
+                    Payment failed. Try again.
+                </div>
+            {% endif %}
+
+        </div>
+    </div>
+</div>
+{% endblock %}

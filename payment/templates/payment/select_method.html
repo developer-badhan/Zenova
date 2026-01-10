@@ -1,0 +1,78 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Choose Payment Method{% endblock %}
+
+{% block content %}
+<link rel="stylesheet" href="{% static 'css/payment.css' %}">
+
+<div class="container my-5">
+    <div class="card border-0 shadow-lg rounded-4 payment-card">
+        <div class="card-header bg-dark text-white py-3 rounded-top">
+            <h4 class="mb-0">
+                <i class="fa-solid fa-wallet me-2"></i>
+                Choose Payment Method
+            </h4>
+        </div>
+
+        <div class="card-body px-4 py-4">
+
+            <!-- Dummy Payment Options -->
+            <div class="list-group mb-4">
+
+                <!-- Google Pay -->
+                <div class="list-group-item payment-option" onclick="showComingSoon('Google Pay')">
+                    <img src="{% static 'images/gpay.png' %}" class="pay-icon">
+                    <div>
+                        <h6 class="mb-0">Google Pay</h6>
+                        <small class="text-muted">UPI via Google (Coming Soon)</small>
+                    </div>
+                </div>
+
+                <!-- PhonePe -->
+                <div class="list-group-item payment-option" onclick="showComingSoon('PhonePe')">
+                    <img src="{% static 'images/phonepe.png' %}" class="pay-icon">
+                    <div>
+                        <h6 class="mb-0">PhonePe</h6>
+                        <small class="text-muted">Fast UPI payments (Coming Soon)</small>
+                    </div>
+                </div>
+
+                <!-- Z-Pay (ACTIVE) -->
+                <form method="post" action="{% url 'payment:zpay_payment' order.id %}">
+                    {% csrf_token %}
+                    <button type="submit" class="list-group-item payment-option active-method w-100 text-start">
+                        <img src="{% static 'images/zpay.png' %}" class="pay-icon">
+                        <div>
+                            <h6 class="mb-0">Z-Pay</h6>
+                            <small class="text-muted">Our own secure payment app</small>
+                        </div>
+                    </button>
+                </form>
+
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<!-- Popup -->
+<div id="comingSoonModal" class="custom-modal">
+    <div class="custom-modal-content">
+        <img id="popupLogo" class="popup-logo" src="" alt="" />
+
+        <h5 id="modalTitle">
+            <span id="paymentName"></span> - Coming Soon
+        </h5>
+
+        <p>
+            This payment method is not connected yet.<br>
+            It will be available soon 🚀
+        </p>
+
+        <button onclick="closeModal()" class="btn btn-dark mt-2">OK</button>
+    </div>
+</div>
+
+
+<script src="{% static 'js/payment.js' %}"></script>
+{% endblock %}

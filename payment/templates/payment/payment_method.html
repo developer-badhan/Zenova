@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Choose Payment Method{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+  <h3>Pay for Order #{{ order.id }}</h3>
+  <p>Total: ₹{{ order.total_amount|floatformat:2 }}</p>
+
+  <form method="post" action="{% url 'payment:choose_method' order.id %}">
+    {% csrf_token %}
+    <div class="form-check">
+      <input class="form-check-input" type="radio" name="method" id="zpay" value="1" checked>
+      <label class="form-check-label" for="zpay">
+        Z-Pay (Demo)
+      </label>
+    </div>
+
+    <div class="mt-4">
+      <button type="submit" class="btn btn-primary">Continue</button>
+      <a href="{% url 'payment:order_detail' order.id %}" class="btn btn-secondary">Back</a>
+    </div>
+  </form>
+</div>
+{% endblock %}
