@@ -8,13 +8,9 @@ def simulate_gateway_delay():
     time.sleep(2)  
 
 
-# Payment Result
+# Payment  Succession Result
 def simulate_payment_result():
-    return random.choices(
-        population=["success", "failure"],
-        weights=[80, 20],
-        k=1
-    )[0]
+    return "success"
 
 
 # Additional Details

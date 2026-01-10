@@ -55,11 +55,11 @@ class ZPayPaymentView(View):
     def post(self, request, order_id):
         Order = apps.get_model('shop', 'Order')
         order = Order.objects.get(id=order_id, user=request.user)
-        payment = Payment.objects.get(order_id=order.id)
+        payment = services.create_payment(user=request.user, order=order)
         success = services.process_zpay_payment(payment=payment, order=order)
         if success:
             messages.success(request, "Payment successful 🎉")
-            return redirect("order_detail", order_id=order.id)
+            return redirect("order_list")
         messages.error(request, "Payment failed. Please try again.")
         return redirect("payment:zpay_payment", order_id=order.id)
 
