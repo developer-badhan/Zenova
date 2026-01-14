@@ -1,0 +1,68 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Shipment Details{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+
+  <h4 class="fw-bold mb-4">📦 Shipment Details</h4>
+
+  {% for shipment in shipment %}
+  <div class="card shadow-sm border-0 rounded-4 mb-4">
+    <div class="card-body">
+
+      <!-- Status with color -->
+      <p>
+        <strong>Status:</strong>
+        <span class="badge
+          {% if shipment.status == 1 %} bg-secondary
+          {% elif shipment.status == 2 %} bg-primary
+          {% elif shipment.status == 3 %} bg-info
+          {% elif shipment.status == 4 %} bg-success
+          {% elif shipment.status == 5 %} bg-danger
+          {% endif %}
+        ">
+          {{ shipment.get_status_display }}
+        </span>
+      </p>
+
+      <!-- Assigned Staff -->
+      <p>
+        <strong>Assigned Staff:</strong>
+        {% if shipment.assigned_staff %}
+          {{ shipment.assigned_staff.email }}
+        {% else %}
+          <span class="text-muted">Not Assigned</span>
+        {% endif %}
+      </p>
+
+      <!-- Tracking Number -->
+      <p>
+        <strong>Tracking Number:</strong>
+        {{ shipment.tracking_number|default:"Not Available" }}
+      </p>
+
+      <!-- Carrier -->
+      <p>
+        <strong>Carrier:</strong>
+        {{ shipment.carrier|default:"Not Assigned" }}
+      </p>
+
+      <!-- Created -->
+      <p>
+        <strong>Created:</strong>
+        {{ shipment.created_at|date:"Y-m-d H:i" }}
+      </p>
+
+    </div>
+  </div>
+  {% empty %}
+    <p class="text-muted">No shipments found.</p>
+  {% endfor %}
+
+  <a href="javascript:history.back()" class="btn btn-outline-secondary">
+    ← Back
+  </a>
+
+</div>
+{% endblock %}
