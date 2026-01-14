@@ -1,0 +1,105 @@
+{% extends 'admin/admin_base.html' %}
+{% load static %}
+{% block title %}Shipment Management{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+  <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-4">
+    <div>
+      <h4 class="fw-bold mb-0">
+        <i class="fa fa-truck text-primary me-2"></i> Shipment Management
+      </h4>
+      <p class="text-muted small mb-0">
+        Assign shipments to staff and track delivery progress
+      </p>
+    </div>
+    <a href="{% url 'admin_dashboard' %}"
+       class="btn btn-outline-danger btn-sm shadow-sm px-3 py-2">
+      <i class="fa fa-arrow-left me-1"></i> Return
+    </a>
+  </div>
+
+  <div class="card shadow-sm border-0 rounded-4">
+    <div class="card-body p-0">
+      <div class="table-responsive">
+        <table class="table align-middle mb-0">
+          <thead class="bg-light text-secondary small text-uppercase">
+            <tr>
+              <th>No.</th>
+              <th>Order</th>
+              <th>Customer</th>
+              <th>Status</th>
+              <th>Assigned Staff</th>
+              <th>Created</th>
+              <th>Assign Staff</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for shipment in shipments %}
+            <tr>
+              <td>{{ forloop.counter }}</td>
+
+              <td class="fw-semibold">
+                #{{ shipment.order.id }}
+              </td>
+
+              <td>{{ shipment.customer.email }}</td>
+
+              <td>
+                <span class="badge
+                  {% if shipment.status == 1 %} bg-warning-subtle text-warning
+                  {% elif shipment.status == 2 %} bg-info-subtle text-info
+                  {% elif shipment.status == 3 %} bg-primary-subtle text-primary
+                  {% elif shipment.status == 4 %} bg-success-subtle text-success
+                  {% else %} bg-danger-subtle text-danger {% endif %}">
+                  {{ shipment.get_status_display }}
+                </span>
+              </td>
+
+              <td>
+                {% if shipment.assigned_staff %}
+                  {{ shipment.assigned_staff.email }}
+                {% else %}
+                  <span class="text-muted">Not Assigned</span>
+                {% endif %}
+              </td>
+
+              <td>{{ shipment.created_at|date:"Y-m-d H:i" }}</td>
+
+              <td>
+                <form method="post"
+                      action="{% url 'shipment_assign' shipment.id %}"
+                      class="d-flex gap-2">
+                  {% csrf_token %}
+                  <select name="staff_id"
+                          class="form-select form-select-sm"
+                          required>
+                    <option value="">Select Staff</option>
+                    {% for staff in staff_users %}
+                      <option value="{{ staff.id }}">
+                        {{ staff.email }}
+                      </option>
+                    {% endfor %}
+                  </select>
+                  <button type="submit"
+                          class="btn btn-sm btn-primary">
+                    <i class="fa fa-user-plus"></i>
+                  </button>
+                </form>
+              </td>
+            </tr>
+            {% empty %}
+            <tr>
+              <td colspan="7"
+                  class="text-center text-muted py-4">
+                No shipments found.
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

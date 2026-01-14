@@ -1,121 +1,135 @@
 from django.views import View
 from django.shortcuts import render, redirect
 from django.contrib import messages
+from constants.enums import Role
 from shop.services import shipment_service
-from shop.models import Order
+from shop.models import Shipment
 from decorators import signin_required,staff_required,customer_required,login_admin_required
 
 
 
-
-class ShipmentListView(View):
+# Shipment Management By Admin
+class AdminShipmentListView(View):
     @login_admin_required
-    def get(self,request):
+    def get(self, request):
+        shipments = Shipment.objects.select_related("order", "assigned_staff", "customer")
+        staff_users = shipment_service.get_all_staff_users()
+        context ={
+            "shipments": shipments,
+            "staff_users": staff_users,
+            }
+        return render(request,"shipment/admin_list.html",context)
+
+
+# Shipment Assignment To Staff
+class ShipmentAssignStaffView(View):
+    @login_admin_required
+    def post(self, request, shipment_id):
+        staff_id = request.POST.get("staff_id")
         try:
-            shipment = shipment_service.get_all_shipment()
-            return render(request,'shipment/shipment_list.html',{'shipment':shipment})
+            shipment = Shipment.objects.get(id=shipment_id)
+            staff_user = shipment_service.get_all_staff_users().get(id=staff_id)
+            shipment_service.assign_staff_to_shipment(
+                shipment=shipment,
+                staff_user=staff_user
+            )
+            messages.success(request,f"Shipment assigned to {staff_user.email}")
         except Exception as e:
-            print(f"Shipment List was not found. Error :{e}")
-            return redirect('admin_dahboard')
+            messages.error(request, str(e))
+        return redirect("shipment_admin_list")
+
+
+# Staff shipment details
+class StaffShipmentListView(View):
+    @signin_required
+    @staff_required
+    def get(self,request):
+        shipments = shipment_service.get_required_data()
+        return render(request,'shipment/staff_shipment.html',{'shipments':shipments})
+
+
+
+'''
+class StaffMarkShipmentShippedView(View):
+    @staff_required
+    def post(self, request, shipment_id):
+        try:
+            shipment = Shipment.objects.get(id=shipment_id)
+
+            shipment_service.mark_shipment_as_shipped(
+                shipment=shipment,
+                staff_user=request.user
+            )
+
+            messages.success(request, "Shipment marked as shipped.")
+
+        except Exception as e:
+            messages.error(request, str(e))
+
+        return redirect("staff_shipments")
+
+
+# ----------------------------------
+# Mark shipment as delivered
+# ----------------------------------
+class StaffMarkShipmentDeliveredView(View):
+    @staff_required
+    def post(self, request, shipment_id):
+        try:
+            shipment = Shipment.objects.get(id=shipment_id)
+
+            shipment_service.mark_shipment_as_delivered(
+                shipment=shipment,
+                staff_user=request.user
+            )
+
+            messages.success(request, "Shipment marked as delivered.")
+
+        except Exception as e:
+            messages.error(request, str(e))
+
+        return redirect("staff_shipments")
+
+'''
 
 
 
 
+
+# class ShipmentMarkShippedView(View):
+#     @signin_required
+#     @staff_required
+#     def post(self, request, shipment_id):
+#         shipment = Shipment.objects.get(id=shipment_id)
+
+#         shipment_service.mark_shipment_shipped(
+#             shipment=shipment,
+#             staff_user=request.user
+#         )
+#         return redirect("staff_shipments")
+
+
+
+# class ShipmentMarkDeliveredView(View):
+#     @signin_required
+#     @staff_required
+#     def post(self, request, shipment_id):
+#         shipment = Shipment.objects.get(id=shipment_id)
+
+#         shipment_service.mark_shipment_delivered(
+#             shipment=shipment,
+#             staff_user=request.user
+#         )
+#         return redirect("staff_shipments")
+
+
+# Shipment Details for customer
 class ShipmentDetailView(View):
     @signin_required
     @customer_required
-    def get(self, request, order_id):
-        try:
-            shipment = shipment_service.get_shipment_by_order(order_id)
-            if shipment:
-                return render(request, 'shipment/shipment_detail.html', {'shipment': shipment})
-            messages.warning(request, "No shipment found for this order.")
-            return redirect('order_detail', order_id=order_id)
-        except Exception as e:
-            print(f"[ShipmentDetailView] Error: {e}")
-            messages.error(request, "Failed to load shipment details.")
-            return redirect('order_list')
+    def get(self,request):
+        shipment = shipment_service.get_shipment()
+        return render(request,'shipment/detail.html',{'shipment':shipment})
 
+ 
 
-class ShipmentCreateView(View):
-    @login_admin_required
-    def get(self, request, order_id):
-        try:
-            order = Order.objects.get(id=order_id)
-            return render(request, 'shipment/shipment_create.html', {'order': order})
-        except Order.DoesNotExist:
-            messages.error(request, "Order not found.")
-            return redirect('order_list')
-
-    @login_admin_required
-    def post(self, request, order_id):
-        address = request.POST.get('address')
-        tracking_number = request.POST.get('tracking_number', '')
-        carrier = request.POST.get('carrier', '')
-
-        try:
-            shipment = shipment_service.create_shipment(
-                order_id=order_id,
-                address=address,
-                tracking_number=tracking_number,
-                carrier=carrier
-            )
-            if shipment:
-                messages.success(request, "Shipment created successfully.")
-            else:
-                messages.error(request, "Failed to create shipment.")
-        except Exception as e:
-            print(f"[ShipmentCreateView] Error: {e}")
-            messages.error(request, "An error occurred while creating the shipment.")
-
-        return redirect('shipment_detail', order_id=order_id)
-
-class ShipmentUpdateTrackingView(View):
-    def post(self, request, order_id):
-        tracking_number = request.POST.get('tracking_number')
-        carrier = request.POST.get('carrier')
-
-        try:
-            shipment = shipment_service.update_tracking(order_id, tracking_number, carrier)
-            if shipment:
-                messages.success(request, "Tracking information updated.")
-            else:
-                messages.error(request, "Failed to update tracking information.")
-        except Exception as e:
-            print(f"[ShipmentUpdateTrackingView] Error: {e}")
-            messages.error(request, "An error occurred while updating tracking.")
-
-        return redirect('shipment_detail', order_id=order_id)
-
-class ShipmentMarkShippedView(View):
-    @signin_required
-    @staff_required
-    def post(self, request, order_id):
-        try:
-            shipment = shipment_service.mark_as_shipped(order_id)
-            if shipment:
-                messages.success(request, "Shipment marked as shipped.")
-            else:
-                messages.error(request, "Failed to mark shipment as shipped.")
-        except Exception as e:
-            print(f"[ShipmentMarkShippedView] Error: {e}")
-            messages.error(request, "An error occurred while marking as shipped.")
-
-        return redirect('shipment_detail', order_id=order_id)
-
-
-class ShipmentMarkDeliveredView(View):
-    @signin_required
-    @staff_required
-    def post(self, request, order_id):
-        try:
-            shipment = shipment_service.mark_as_delivered(order_id)
-            if shipment:
-                messages.success(request, "Shipment marked as delivered.")
-            else:
-                messages.error(request, "Failed to mark shipment as delivered.")
-        except Exception as e:
-            print(f"[ShipmentMarkDeliveredView] Error: {e}")
-            messages.error(request, "An error occurred while marking as delivered.")
-
-        return redirect('shipment_detail', order_id=order_id)

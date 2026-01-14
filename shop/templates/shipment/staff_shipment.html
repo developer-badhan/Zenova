@@ -1,0 +1,58 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Staff Shipments{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+  <h3 class="mb-4 text-center fw-bold">
+    🚚 Staff Shipments
+  </h3>
+
+  {% if shipments %}
+  <div class="row g-4">
+    {% for shipment in shipments %}
+    <div class="col-md-6 col-lg-4">
+      <div class="card shadow-sm h-100">
+        <div class="card-body">
+
+          <h5 class="fw-bold mb-2">
+            {{ shipment.customer_first_name }} {{ shipment.customer_last_name }}
+          </h5>
+
+          <p class="mb-1">
+            <strong>Email:</strong> {{ shipment.customer_email }}
+          </p>
+
+          <p class="mb-2">
+            <strong>Address:</strong> {{ shipment.address }}
+          </p>
+
+          <p class="mb-2">
+            <strong>Tracking #:</strong> {{ shipment.tracking_number }}
+          </p>
+
+          <p class="mb-2">
+            <strong>Order Created:</strong> {{ shipment.order_created_at|date:"Y-m-d H:i" }}
+          </p>
+
+          <span class="badge
+            {% if shipment.status == 'Pending Assignment' %} bg-warning
+            {% elif shipment.status == 'Assigned' %} bg-info
+            {% elif shipment.status == 'Shipped' %} bg-success
+            {% else %} bg-secondary {% endif %}">
+            {{ shipment.status }}
+          </span>
+
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <p class="text-center text-muted mt-4">
+    No shipments found.
+  </p>
+  {% endif %}
+</div>
+{% endblock %}
