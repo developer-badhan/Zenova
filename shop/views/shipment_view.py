@@ -49,49 +49,93 @@ class StaffShipmentListView(View):
 
 
 
-'''
+# Shipment Shipped View
 class StaffMarkShipmentShippedView(View):
+    @signin_required
+    @staff_required
+    def get(self, request, shipment_id):
+        return render(request, 'shipment/staff_mark_shipped.html')
+
+    @signin_required
     @staff_required
     def post(self, request, shipment_id):
         try:
             shipment = Shipment.objects.get(id=shipment_id)
-
             shipment_service.mark_shipment_as_shipped(
                 shipment=shipment,
                 staff_user=request.user
             )
-
             messages.success(request, "Shipment marked as shipped.")
-
         except Exception as e:
             messages.error(request, str(e))
-
         return redirect("staff_shipments")
 
 
-# ----------------------------------
 # Mark shipment as delivered
-# ----------------------------------
 class StaffMarkShipmentDeliveredView(View):
+    @signin_required
+    @staff_required
+    def get(self, request, shipment_id):
+        return render(request, "shipment/staff_mark_delivered.html")
+    
+    @signin_required
     @staff_required
     def post(self, request, shipment_id):
         try:
             shipment = Shipment.objects.get(id=shipment_id)
-
             shipment_service.mark_shipment_as_delivered(
                 shipment=shipment,
                 staff_user=request.user
             )
-
             messages.success(request, "Shipment marked as delivered.")
-
         except Exception as e:
             messages.error(request, str(e))
-
         return redirect("staff_shipments")
 
-'''
 
+
+# # Shipment Shipped View
+# class StaffMarkShipmentShippedView(View):
+#     @signin_required
+#     @staff_required
+#     def get(self, request, shipment_id):
+#         return render(request, 'shipment/staff_mark_shipped.html')
+
+#     @signin_required
+#     @staff_required
+#     def post(self, request, shipment_id):
+#         try:
+#             shipment = Shipment.objects.get(id=shipment_id)
+#             shipment_service.mark_shipment_as_shipped(
+#                 shipment=shipment,
+#                 staff_user=request.user
+#             )
+#             messages.success(request, "Shipment marked as shipped.")
+#         except Exception as e:
+#             messages.error(request, str(e))
+#         return redirect("staff_shipments")
+
+
+# # Mark shipment as delivered
+# class StaffMarkShipmentDeliveredView(View):
+#     @signin_required
+#     @staff_required
+#     def get(self, request, shipment_id):
+#         return render(request, "shipment/staff_mark_delivered.html")
+
+#     @signin_required
+#     @staff_required
+#     def post(self, request, shipment_id):
+#         try:
+#             shipment = Shipment.objects.get(id=shipment_id)
+#             shipment_service.mark_shipment_as_delivered(
+#                 shipment=shipment,
+#                 staff_user=request.user
+#             )
+#             messages.success(request, "Shipment marked as delivered.")
+#         except Exception as e:
+#             messages.error(request, str(e))
+#         return redirect("staff_shipments")
 
 
 

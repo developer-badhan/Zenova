@@ -8,48 +8,74 @@
   <h3 class="mb-4 text-center fw-bold">
     🚚 Staff Shipments
   </h3>
+
   {% if shipments %}
   <div class="table-responsive">
-    <table class="table table-striped table-hover align-middle">
+    <table class="table table-bordered align-middle text-center">
       <thead class="table-dark">
         <tr>
-          <th scope="col">#</th>
-          <th scope="col">Customer Name</th>
-          <th scope="col">Email</th>
-          <th scope="col">Address</th>
-          <th scope="col">Tracking #</th>
-          <th scope="col">Order Created</th>
-          <th scope="col">Status</th>
+          <th>Order Date</th>
+          <th>Customer</th>
+          <th>Address</th>
+          <th>Status</th>
+          <th>Tracking</th>
+          <th>Action</th>
         </tr>
       </thead>
+
       <tbody>
-        {% for shipment in shipments %}
+        {% for s in shipments %}
         <tr>
-          <th scope="row">{{ forloop.counter }}</th>
-          <td>{{ shipment.customer_first_name }} {{ shipment.customer_last_name }}</td>
-          <td>{{ shipment.customer_email }}</td>
-          <td>{{ shipment.address }}</td>
-          <td>{{ shipment.tracking_number }}</td>
-          <td>{{ shipment.order_created_at|date:"Y-m-d H:i" }}</td>
+          <td>{{ s.order_created_at }}</td>
+          <td>{{ s.customer_first_name }} {{ s.customer_last_name }}</td>
+          <td>{{ s.address }}</td>
+
+          <!-- STATUS BADGE -->
           <td>
-            <span class="badge
-              {% if shipment.status == 'Pending Assignment' %} bg-warning
-              {% elif shipment.status == 'Assigned' %} bg-info
-              {% elif shipment.status == 'Shipped' %} bg-success
-              {% else %} bg-secondary {% endif %}">
-              {{ shipment.status }}
-            </span>
+            {% if s.status == "Assigned" %}
+              <span class="badge bg-warning text-dark">Assigned</span>
+            {% elif s.status == "Shipped" %}
+              <span class="badge bg-primary">Shipped</span>
+            {% elif s.status == "Delivered" %}
+              <span class="badge bg-success">Delivered</span>
+            {% else %}
+              <span class="badge bg-secondary">Unknown</span>
+            {% endif %}
+          </td>
+
+          <td>{{ s.tracking_number|default:"—" }}</td>
+
+          <!-- ACTION -->
+          <td>
+            {% if s.status == "Assigned" %}
+              <a href="{% url 'shipment_shipped' shipment_id=s.id %}"
+                 class="btn btn-sm btn-primary">
+                 🚚 Mark Shipped
+              </a>
+
+            {% elif s.status == "Shipped" %}
+              <a href="{% url 'shipment_delivered' shipment_id=s.id %}"
+                 class="btn btn-sm btn-success">
+                 📦 Mark Delivered
+              </a>
+
+            {% elif s.status == "Delivered" %}
+              <span class="text-muted fw-semibold">Completed</span>
+
+            {% else %}
+              <span class="text-muted">No Action</span>
+            {% endif %}
           </td>
         </tr>
         {% endfor %}
       </tbody>
     </table>
   </div>
+
   {% else %}
-  <p class="text-center text-muted mt-4">
-    No shipments found.
-  </p>
+    <p class="text-center text-muted mt-4">
+      No shipments found.
+    </p>
   {% endif %}
 </div>
 {% endblock %}
-

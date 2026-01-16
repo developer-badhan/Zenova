@@ -1,9 +1,8 @@
-from decimal import Decimal
-from urllib import request
-from django.apps import apps
 from payment.models import Payment, PaymentMethod, PaymentStatus
 from payment import utils
 from shop.services import coupon_service
+from shop.services import shipment_service
+from django.core.exceptions import ValidationError
 
 
 
@@ -33,14 +32,30 @@ def process_zpay_payment(*, payment, order, request):
     txn_id = utils.generate_txn_id()
     meta = utils.build_transaction_meta(order.id, "ZPAY")
     if result == "success":
-        payment.mark_success(txn_id=txn_id, meta=meta)
+        payment.mark_success(txn_id=txn_id,meta=meta)
         if order.coupon:
-            coupon_service.mark_coupon_used(order.user, order.coupon)
+            coupon_service.mark_coupon_used(order.user,order.coupon)
             coupon_service.flush_coupon_session(request)
         order.is_paid = True
         order.payment_status = "paid"
-        order.save(update_fields=["is_paid", "payment_status"])
+        order.payment = payment
+        order.save(update_fields=[
+            "is_paid",
+            "payment_status",
+            "payment"
+        ])
+        address = order.user.addresses.filter(
+            is_default=True
+        ).first()
+        if not address:
+            raise ValidationError(
+                "Default address not found. Cannot create shipment."
+            )
+        shipment_service.create_shipment_after_payment(
+            order=order,
+            address=address
+        )
         return True
-    payment.mark_failed(txn_id=txn_id, meta=meta)
+    payment.mark_failed(txn_id=txn_id,meta=meta)
     coupon_service.flush_coupon_session(request)
     return False

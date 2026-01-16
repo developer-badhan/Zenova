@@ -57,12 +57,12 @@ urlpatterns = [
     path('zenova.com/coupons/<int:coupon_id>/apply/', views.CouponApplyView.as_view(), name='coupon_apply'),
 
     # Product Shipment Routes
-    path('zenova.com/shipments/',views.ShipmentListView.as_view(),name='shipment_list'),
-    path('zenova.com/shipments/<int:order_id>/', views.ShipmentDetailView.as_view(), name='shipment_detail'),
-    path('zenova.com/shipments/<int:order_id>/create/', views.ShipmentCreateView.as_view(), name='shipment_create'),
-    path('zenova.com/shipments/<int:order_id>/update-tracking/', views.ShipmentUpdateTrackingView.as_view(),  name='shipment_update_tracking'),
-    path('zenova.com/shipments/<int:order_id>/mark-shipped/', views.ShipmentMarkShippedView.as_view(), name='shipment_mark_shipped'),
-    path('zenova.com/shipments/<int:order_id>/mark-delivered/', views.ShipmentMarkDeliveredView.as_view(), name='shipment_mark_delivered'),
+    path('zenova.com/admin/shipments/', views.AdminShipmentListView.as_view(), name='shipment_admin_list'),
+    path('zenova.com/admin/shipment/<int:shipment_id>/assign/', views.ShipmentAssignStaffView.as_view(), name='shipment_assign'),
+    path('zenova.com/staff/shipments/', views.StaffShipmentListView.as_view(), name='staff_shipments'),
+    path('zenova.com/staff/shipment/<int:shipment_id>/shipped/', views.StaffMarkShipmentShippedView.as_view(), name='shipment_shipped'),
+    path('zenova.com/staff/shipment/<int:shipment_id>/delivered/', views.StaffMarkShipmentDeliveredView.as_view(), name='shipment_delivered'),
+    path('zenova.com/shipment/', views.ShipmentDetailView.as_view(), name='shipment_detail'),
 
     # Product Search Routes
     path('zenova.com/products/search/', views.ProductSearchView.as_view(), name='product_search'),
@@ -82,9 +82,3 @@ urlpatterns = [
 
 
 ]
-
-
-
-
-
-

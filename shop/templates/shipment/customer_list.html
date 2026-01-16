@@ -1,0 +1,59 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}My Shipments{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+  <h3 class="mb-4 text-center fw-bold">
+    📦 My Shipment Status
+  </h3>
+
+  {% if shipments %}
+  <div class="row g-4">
+    {% for shipment in shipments %}
+    <div class="col-md-6 col-lg-4">
+      <div class="card shadow-sm h-100">
+        <div class="card-body">
+
+          <h5 class="fw-bold">
+            Order #{{ shipment.order.id }}
+          </h5>
+
+          <p class="mb-2">
+            <strong>Status:</strong><br>
+            <span class="badge
+              {% if shipment.status == 1 %} bg-warning
+              {% elif shipment.status == 2 %} bg-info
+              {% elif shipment.status == 3 %} bg-primary
+              {% elif shipment.status == 4 %} bg-success {% endif %}">
+              {{ shipment.get_status_display }}
+            </span>
+          </p>
+
+          <p class="mb-2">
+            <strong>Address:</strong><br>
+            {{ shipment.address_snapshot }}
+          </p>
+
+          <a href="{% url 'shipment_detail' shipment.id %}"
+             class="btn btn-sm btn-outline-primary w-100">
+            View Details
+          </a>
+
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="text-center py-5">
+    <img src="https://cdn-icons-png.flaticon.com/512/679/679922.png"
+         width="120"
+         class="mb-3">
+    <p class="text-muted fs-5">
+      No shipments yet.
+    </p>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

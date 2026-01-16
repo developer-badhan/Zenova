@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block title %}Mark Shipment as Delivered{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+  <div class="row justify-content-center">
+    <div class="col-md-6">
+      <div class="card shadow-lg border-0">
+        <div class="card-header bg-success text-white text-center">
+          <h5 class="mb-0">📦 Confirm Delivery</h5>
+        </div>
+
+        <div class="card-body text-center">
+          <p class="fs-6 mb-4">
+            Please confirm that this shipment has been
+            <strong class="text-success">DELIVERED</strong>.
+          </p>
+
+          <form method="post">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-success px-4">
+              ✅ Confirm Delivered
+            </button>
+
+            <a href="{% url 'staff_shipments' %}"
+               class="btn btn-outline-secondary px-4 ms-2">
+              Cancel
+            </a>
+          </form>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
