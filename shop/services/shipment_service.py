@@ -111,30 +111,3 @@ def mark_shipment_as_delivered(*, shipment: Shipment, staff_user):
     shipment.delivered_at = timezone.now()
     shipment.save()
     return shipment
-
-
-
-
-# def mark_shipment_shipped(*, shipment, staff_user):
-#     if shipment.assigned_staff != staff_user:
-#         raise ValidationError("You are not assigned to this shipment")
-
-#     if shipment.status != ShipmentStatus.ASSIGNED:
-#         raise ValidationError("Shipment must be assigned before shipping")
-
-#     shipment.status = ShipmentStatus.SHIPPED
-#     shipment.shipped_at = timezone.now()
-#     shipment.save(update_fields=["status", "shipped_at", "updated_at"])
-
-
-# def mark_shipment_delivered(*, shipment, staff_user):
-#     if shipment.assigned_staff != staff_user:
-#         raise ValidationError("You are not assigned to this shipment")
-
-#     if shipment.status != ShipmentStatus.SHIPPED:
-#         raise ValidationError("Shipment must be shipped before delivery")
-
-#     shipment.status = ShipmentStatus.DELIVERED
-#     shipment.delivered_at = timezone.now()
-#     shipment.save(update_fields=["status", "delivered_at", "updated_at"])
-
