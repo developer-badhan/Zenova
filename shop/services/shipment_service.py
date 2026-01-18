@@ -61,141 +61,6 @@ def assign_staff_to_shipment(*, shipment: Shipment, staff_user):
     shipment.save()
     return shipment
 
-'''
-# Fetch shipment data for staff
-def get_required_data():
-    shipments = Shipment.objects.select_related('customer', 'order').filter(
-        status__in=[
-            ShipmentStatus.PENDING_ASSIGNMENT.value,
-            ShipmentStatus.ASSIGNED.value,
-            ShipmentStatus.SHIPPED.value,
-        ]
-    )
-
-    data = []
-    for shipment in shipments:
-        data.append({
-            'id': shipment.id,
-            'customer_first_name': shipment.customer.first_name,
-            'customer_last_name': shipment.customer.last_name,
-            'customer_email': shipment.customer.email,
-            'address': shipment.address_snapshot,
-            'tracking_number': shipment.tracking_number or 'N/A',
-            'order_created_at': shipment.order.created_at,
-            'status': ShipmentStatus(shipment.status).name.replace("_", " ").title(),
-        })
-    return data
-
-
-# Staff: mark shipment as shipped
-@transaction.atomic
-def mark_shipment_as_shipped(*, shipment: Shipment, staff_user):
-    if shipment.assigned_staff != staff_user:
-        raise PermissionError("You are not assigned to this shipment.")
-    if shipment.status != ShipmentStatus.ASSIGNED:
-        raise ValueError("Shipment cannot be marked as shipped.")
-    shipment.status = ShipmentStatus.SHIPPED
-    shipment.shipped_at = timezone.now()
-    shipment.save()
-    return shipment
-
-
-# Staff: mark shipment as delivered
-@transaction.atomic
-def mark_shipment_as_delivered(*, shipment: Shipment, staff_user):
-    if shipment.assigned_staff != staff_user:
-        raise PermissionError("You are not assigned to this shipment.")
-    if shipment.status != ShipmentStatus.SHIPPED:
-        raise ValueError("Shipment cannot be marked as delivered.")
-    shipment.status = ShipmentStatus.DELIVERED
-    shipment.delivered_at = timezone.now()
-    shipment.save()
-    return shipment
-
-'''
-
-
-
-
-
-
-# from django.db import transaction
-# from django.utils import timezone
-# from shop.models import Shipment, ShipmentStatus
-
-
-# # Fetch shipment data for staff
-# def get_required_data():
-#     shipments = Shipment.objects.select_related('customer', 'order').filter(
-#         status__in=[
-#             ShipmentStatus.PENDING_ASSIGNMENT.value,
-#             ShipmentStatus.ASSIGNED.value,
-#             ShipmentStatus.SHIPPED.value,
-#         ]
-#     )
-
-#     data = []
-#     for shipment in shipments:
-#         data.append({
-#             'id': shipment.id,
-#             'customer_first_name': shipment.customer.first_name,
-#             'customer_last_name': shipment.customer.last_name,
-#             'customer_email': shipment.customer.email,
-#             'address': shipment.address_snapshot,
-#             'tracking_number': shipment.tracking_number or 'N/A',
-#             'order_created_at': shipment.order.created_at,
-#             'status': ShipmentStatus(shipment.status).name.replace("_", " ").title(),
-#             'status_value': shipment.status,  # Added for easier status checking in template
-#         })
-#     return data
-
-
-# # Staff: mark shipment as shipped
-# @transaction.atomic
-# def mark_shipment_as_shipped(*, shipment: Shipment, staff_user):
-#     if shipment.assigned_staff != staff_user:
-#         raise PermissionError("You are not assigned to this shipment.")
-#     if shipment.status != ShipmentStatus.ASSIGNED.value:  # Fixed: compare with .value
-#         raise ValueError("Shipment cannot be marked as shipped.")
-#     shipment.status = ShipmentStatus.SHIPPED.value
-#     shipment.shipped_at = timezone.now()
-#     shipment.save()
-#     return shipment
-
-
-# # Staff: mark shipment as delivered
-# @transaction.atomic
-# def mark_shipment_as_delivered(*, shipment: Shipment, staff_user):
-#     if shipment.assigned_staff != staff_user:
-#         raise PermissionError("You are not assigned to this shipment.")
-#     if shipment.status != ShipmentStatus.SHIPPED.value:  # Fixed: compare with .value
-#         raise ValueError("Shipment cannot be marked as delivered.")
-#     shipment.status = ShipmentStatus.DELIVERED.value
-#     shipment.delivered_at = timezone.now()
-#     shipment.save()
-#     return 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 # Fetch shipment data for staff
 def get_required_data():
@@ -226,36 +91,24 @@ def get_required_data():
 # Staff: mark shipment as shipped
 @transaction.atomic
 def mark_shipment_as_shipped(*, shipment: Shipment, staff_user):
-    # Check if staff is assigned
     if shipment.assigned_staff != staff_user:
         raise PermissionError("You are not assigned to this shipment.")
-    
-    # Check current status - compare integer to integer
     if shipment.status != ShipmentStatus.ASSIGNED:
         raise ValueError(f"Shipment cannot be marked as shipped. Current status: {shipment.status}")
-    
-    # Update status
     shipment.status = ShipmentStatus.SHIPPED
     shipment.shipped_at = timezone.now()
     shipment.save()
-    
     return shipment
 
 
 # Staff: mark shipment as delivered
 @transaction.atomic
 def mark_shipment_as_delivered(*, shipment: Shipment, staff_user):
-    # Check if staff is assigned
     if shipment.assigned_staff != staff_user:
-        raise PermissionError("You are not assigned to this shipment.")
-    
-    # Check current status - compare integer to integer
+        raise PermissionError("You are not assigned to this shipment.")    
     if shipment.status != ShipmentStatus.SHIPPED:
-        raise ValueError(f"Shipment cannot be marked as delivered. Current status: {shipment.status}")
-    
-    # Update status
+        raise ValueError(f"Shipment cannot be marked as delivered. Current status: {shipment.status}")    
     shipment.status = ShipmentStatus.DELIVERED
     shipment.delivered_at = timezone.now()
     shipment.save()
-    
     return shipment
