@@ -92,3 +92,24 @@ def login_admin_required_with_user(view_func):
             return redirect('user_login')
         return view_func(view_self, request, *args, **kwargs)
     return wrapper
+
+
+# Combined decorator for class-based views with authentication
+def staff_view_required(view_func):
+    @wraps(view_func)
+    def wrapper(request, *args, **kwargs):
+        if not hasattr(request, 'session') or not request.session.get('is_authenticated'):
+            return redirect('user_login')
+        if request.session.get('user_role') != Role.ENDUSER_STAFF:
+            return redirect('user_login')
+        user_id = request.session.get('user_id')
+        if user_id:
+            try:
+                user_model = get_user_model()
+                request.user = user_model.objects.get(id=user_id)
+            except user_model.DoesNotExist:
+                return redirect('user_login')
+        else:
+            return redirect('user_login')
+        return view_func(request, *args, **kwargs)
+    return wrapper
